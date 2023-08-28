@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Payroll;
 use App\Models\Status;
 use App\Models\Campus;
+use App\Models\Modify;
 class ImportController extends Controller
 {
     public function importPayrolls(Request $request, $payrollID, $statID)
@@ -105,7 +106,7 @@ class ImportController extends Controller
                         ]);
 
                         DB::table('deductions')->insert([
-                            'payroll_id'=> $payrollID,
+                            'payroll_id'=> $payrollID
                         ]);
 
                         $inserted_count++;
@@ -159,22 +160,23 @@ class ImportController extends Controller
         $stat = Status::find($statID);
         $emp_statname = $stat->status_name;
         $payroll = Payroll::find($payrollID);
+        $pay_id = $payroll->id;
         $campID = $payroll->campus_id;
         $startDate = $payroll->payroll_dateStart;
         $endDate = $payroll->payroll_dateEnd;
 
-        if($emp_statname == "Job Order" || $emp_statname == "Part-time"){
-            $hr_day = $request->hr_day;
-            if($request->hr_day == "Hours"){
-                $number_hours=$request->number_hours;
-            }
-            if($request->hr_day == "Days"){
-                $number_hours=$request->number_hours * 8;
-            }
-            $days = $number_hours/8;
-        }
+        // if($emp_statname == "Job Order" || $emp_statname == "Part-time"){
+        //     $hr_day = $request->hr_day;
+        //     if($request->hr_day == "Hours"){
+        //         $number_hours=$request->number_hours;
+        //     }
+        //     if($request->hr_day == "Days"){
+        //         $number_hours=$request->number_hours * 8;
+        //     }
+        //     $days = $number_hours/8;
+        // }
 
-        if($emp_statname == "Regular"){
+        if($emp_statname == "Regular" || $emp_statname == "Job Order"){
             $hr_day = "Hours";
             $number_hours=$request->number_hours * 8;
             $days = $request->number_hours;
@@ -187,6 +189,7 @@ class ImportController extends Controller
         }
 
         $employees = DB::table('employees')->where('emp_id', $request->emp_ID)->first();
+        $empOff=$employees->emp_dept;
         if($employees->partime_rate == 0){
             $salary = $employees->emp_salary;
             $total_sal = floatval(sprintf("%.2f",$salary * $days));
@@ -197,13 +200,15 @@ class ImportController extends Controller
         }
 
         if($emp_statname == "Job Order" || $emp_statname == "Part-time" || $emp_statname == "Part-time/JO"){
-            $tax1 = floatval(sprintf("%.2f", 0.01 * $total_sal));
+            $half = round(($employees->emp_salary / 2), 2);
+            $tax1 = floatval(sprintf("%.2f",$half * 0.01));
         }
+
         if($emp_statname == "Regular"){
             $tax1 = "0.00";
-            $rlip = $employees->emp_salary * 0.09;
+            $rlip = round(($employees->emp_salary * 0.09), 2);
             if($employees->emp_salary >= 80000){
-                $ph = 1600;
+                $ph = 1600.00;
             }
             else{
                 $ph = $employees->emp_salary * 0.02;
@@ -215,49 +220,73 @@ class ImportController extends Controller
             ->first();
 
             if ($existing_record) {
-                // Update existing record
-                DB::table('payroll_files')
-                    ->where('emp_id', $request->emp_ID)
-                    ->where('camp_ID', $campID)
-                    ->where('stat_ID', $statID)
-                    ->where('startDate', $startDate)
-                    ->where('endDate', $endDate)
-                    ->update([
-                        'salary_rate' => $salary,
-                        'number_hours' => $number_hours ? $number_hours : 0,
-                        'number_days' => $days,
-                        'total_salary' => sprintf("%.2f", $total_sal),
-                        'tax1' => sprintf("%.2f", $tax1),
-                        'stat_ID' => $statID
-                    ]);
-                return back()->with('import-success', 'Payrolls Updated successfully.')->with('status', "Updating");
+                return redirect()->back()->with('error', 'Already Exist');  
             }
             else {
             // Insert new record
             $payrollID = DB::table('payroll_files')->insertGetId([
                 'payroll_ID' => $payrollID,
                 'emp_id' => $request->emp_ID,
+                'emp_pos' => $employees->position,
+                'sg' => $employees->sg_step,
                 'salary_rate' => $salary,
                 'number_hours' => $number_hours,
                 'number_days' => $days,
                 'hr_day' => $hr_day,
                 'total_salary' => sprintf("%.2f", $total_sal),
-                'tax1' => $tax1,
                 'startDate' => $startDate,
                 'endDate' => $endDate,
                 'camp_ID' => $campID,
-                'stat_ID' => $statID
+                'stat_ID' => $statID,
             ]);
-   
-            DB::table('deductions')->insert([
-                'payroll_id'=> $payrollID,
-                'rlip'=> $rlip ?? '0.00',
-                'philhealth' => $ph ?? '0.00',
-            ]);
+            
+			if($emp_statname == "Regular"){
+                DB::table('deductions')->insert([
+                    'payroll_id'=> $payrollID,
+                    'rlip'=> $rlip ?? '0.00',
+                    'philhealth' => $ph ?? '0.00',
+                    'fasfeed' => '100',
+                ]);
+    
+                $data = [
+                    ['column' => 'Project', 'action' => 'Deduction', 'amount' => '0.00'],
+                    ['column' => 'Net_MPC', 'action' => 'Deduction', 'amount' => '0.00'],
+                    ['column' => 'Graduate', 'action' => 'Deduction', 'amount' => '0.00'],
+                    ['column' => 'Philhealth', 'action' => 'Deduction', 'amount' => '0.00'],
+                    ['column' => 'Pag_ibig', 'action' => 'Deduction', 'amount' => '0.00'],
+                    ['column' => 'Gsis', 'action' => 'Deduction', 'amount' => '0.00'],
+                    ['column' => 'Csb', 'action' => 'Deduction', 'amount' => '0.00'],
+                ];
+            }
 
-   
-           
-            return back()->with('import-success', 'Payrolls imported successfully.')->with('status', "Uploading");
+            if($emp_statname == "Job Order"){
+
+                DB::table('deductions')->insert([
+                    'payroll_id'=> $payrollID,
+                    'tax1' => $tax1,
+                ]);
+
+                $data = [
+                    ['column' => 'Project', 'action' => 'Deduction', 'amount' => '0.00'],
+                    ['column' => 'Net_MPC', 'action' => 'Deduction', 'amount' => '0.00'],
+                    ['column' => 'Graduate', 'action' => 'Deduction', 'amount' => '0.00'],
+                    ['column' => 'Less_Absences', 'action' => 'Deduction', 'amount' => '0.00'],
+                    ['column' => 'Less_Late', 'action' => 'Deduction', 'amount' => '0.00'],
+                ];
+            }
+            
+            foreach ($data as $item) {
+                Modify::create([
+                    'pay_id' => $pay_id,
+                    'payroll_id' => $payrollID,
+                    'off_id' => $empOff,
+                    'column' => $item['column'],
+                    'action' => $item['action'],
+                    'amount' => $item['amount'],
+                ]);
+            }                     
+
+            return redirect()->back()->with('success', 'Additionals successfully');  
         }
     }
 

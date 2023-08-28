@@ -10,6 +10,7 @@ use App\Http\Controllers\DeductionController;
 use App\Http\Controllers\AdditionalController;
 use App\Http\Controllers\OfficeController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ModifyController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -56,17 +57,19 @@ Route::group(['middleware'=>['login_auth']],function(){
     Route::post('/payroll/createPayroll',[PayrollController::class,'createPayroll'])->name('createPayroll');
     Route::get('/deletePayroll/{id}',[PayrollController::class,'deletePayroll'])->name('deletePayroll');
     Route::get('/deletePayrollFiles/{id}',[PayrollController::class,'deletePayrollFiles'])->name('deletePayrollFiles');
-    Route::get('/deductions-edit/{id}', [DeductionController::class, 'deductionsEdit'])->name('deductions-edit');
-    Route::post('/deductions-update', [DeductionController::class, 'deductionsUpdate'])->name('deductions-update');
-    Route::post('/additional-update', [DeductionController::class, 'additionalUpdate'])->name('additional-update');
     Route::get('/update-code',[PayrollController::class,'updateCode'])->name('update-code');
-    Route::get('/storepayroll/{payrollID}/{statID}',[PayrollController::class,'storepayroll'])->name('storepayroll');
-    Route::get('/pdf/{payrollID}/{statID}',[PayrollController::class,'showPdf'])->name('pdf');
+    Route::get('/storepayroll/{payrollID}/{statID}/{offID}',[PayrollController::class,'storepayroll'])->name('storepayroll');
+    Route::get('/storepayroll-jo/{payrollID}/{statID}/{offID}',[PayrollController::class,'storepayroll'])->name('storepayroll-jo');
+    Route::get('/pdf/{payrollID}/{statID}/{pid}/{offid}',[PayrollController::class,'showPdf'])->name('pdf');
     Route::post('/import/{payrollID}/{statID}', [ImportController::class, 'importPayrolls'])->name('import');
     Route::post('/importPayrollsTwo/{payrollID}/{statID}', [ImportController::class, 'importPayrollsTwo'])->name('importPayrollsTwo');
-    Route::get('/deductions-edit/{id}', [DeductionController::class, 'deductionsEdit'])->name('deductions-edit');
+    Route::post('/deductions-edit', [DeductionController::class, 'deductionsEdit'])->name('deductions-edit');
     Route::post('/deductions-update', [DeductionController::class, 'deductionsUpdate'])->name('deductions-update');
     Route::post('/additional-update', [DeductionController::class, 'additionalUpdate'])->name('additional-update');
+    Route::get('/saltypepUp/{id}/{val}', [PayrollController::class, 'saltypepUp'])->name('saltypepUp');
+
+    Route::get('/modify/show/{id}', [ModifyController::class, 'modifyShow'])->name('modifyShow');
+    Route::post('/modify/update', [ModifyController::class, 'modifyUpdate'])->name('modifyUpdate');
 
     //Office
     Route::get('/office/list',[OfficeController::class,'officeList'])->name('officeList');
@@ -77,7 +80,6 @@ Route::group(['middleware'=>['login_auth']],function(){
 
     //Employee
     Route::get('/emp/emplist',[EmployeeController::class,'emp_list'])->name('emp_list');
-
     Route::get('/logout',[MasterController::class,'logout'])->name('logout');
     
 });

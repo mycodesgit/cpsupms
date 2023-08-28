@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Office;
@@ -18,6 +18,7 @@ class OfficeController extends Controller
         $validator = Validator::make($request->all(), [
             'OfficeName'=>'required',
             'OfficeAbbreviation'=>'required',
+            'GroupBy'=>'required',
         ]);
 
         if ($validator->fails()) {
@@ -34,6 +35,7 @@ class OfficeController extends Controller
                 $query = Office::insert([
                     'office_name'=>$request->input('OfficeName'),
                     'office_abbr'=>$request->input('OfficeAbbreviation'),
+                    'group_by'=>$request->input('GroupBy'),
                 ]);
                 
                 return redirect()->back()->with('success', 'Office Added Successfully'); 
@@ -56,6 +58,7 @@ class OfficeController extends Controller
         $validator = Validator::make($request->all(), [
             'OfficeName'=>'required',
             'OfficeAbbreviation'=>'required',
+            'GroupBy'=>'required',
         ]);
 
         if ($validator->fails()) {
@@ -71,7 +74,8 @@ class OfficeController extends Controller
             {
                 $update = [
                     'office_name'=>$request->input('OfficeName'),
-                    'office_abbr'=>$request->input('OfficeAbbreviation')
+                    'office_abbr'=>$request->input('OfficeAbbreviation'),
+                    'group_by'=>$request->input('GroupBy')
                 ];
                 DB::table('offices')->where('id', $request->oid)->update($update);
 

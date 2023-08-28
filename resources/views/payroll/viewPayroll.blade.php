@@ -52,6 +52,12 @@
                                     @php
                                         $dstart = date('M. d, Y', strtotime($p->payroll_dateStart));
                                         $dend = date('M. d, Y', strtotime($p->payroll_dateEnd));
+
+                                        if($p->payroll_id == 1){
+                                            $routes = "storepayroll";
+                                        }else{
+                                            $routes = "storepayroll-jo";
+                                        }
                                     @endphp
                                     <tr id="tr-{{ $p->id }}">
                                         <td>{{ $idd++ }}</td>
@@ -69,7 +75,7 @@
                                                 <i class="fas fa-money-bill"></i>
                                             </a>
                                             @endif
-                                            <a href="{{ route('storepayroll', ['payrollID' => $p->id, 'statID' => $p->payroll_id]) }}" class="btn btn-info btn-sm" title="View">
+                                            <a href="{{ route($routes, ['payrollID' => $p->id, 'statID' => $p->payroll_id, 'offID' => 'All']) }}" class="btn btn-info btn-sm" title="View">
                                                 <i class="fas fa-exclamation-circle"></i>
                                             </a>
                                             <button type="button" value="{{ $p->id }}" class="btn btn-danger btn-sm payroll-delete">

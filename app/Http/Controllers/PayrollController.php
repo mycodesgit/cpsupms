@@ -10,11 +10,14 @@ use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\DB;
 use App\Models\Payroll; 
 use App\Models\Campus; 
+use App\Models\Office;
 use App\Models\Status;
 use App\Models\PayrollFile;
 use App\Models\Employee;
 use App\Models\Deduction;
+use App\Models\Deductiontwo;
 use App\Models\Code;
+use App\Models\Modify;
 use PDF;
 
 class PayrollController extends Controller
@@ -39,11 +42,13 @@ class PayrollController extends Controller
                 $status = Status::where('status_name', '!=', 'Regular')->get();
                 $camp = Campus::find(auth()->user()->campus_id)->get();
             }
+
+            return view("payroll.viewPayroll", compact('camp', 'status', 'campId', 'pays'));
+
         } catch (\Exception $e) { 
             return redirect()->back()->with('error', 'You do not have permission to access this page');  
         }
     
-        return view("payroll.viewPayroll", compact('camp', 'status', 'campId', 'pays'));
     } 
 
     public function createPayroll(Request $request){
@@ -171,9 +176,13 @@ class PayrollController extends Controller
 
         if ($PayrollFile) {
             $id1 = $PayrollFile->id;
-            $Deduction = Deduction::where('payroll_id', $id1)->delete();
+        
+            Deduction::where('payroll_id', $id1)->delete();
+            Modify::where('pay_id', $id)->delete();
+        
             $PayrollFile->delete();
         }
+        
     
         $payroll->delete();
     
@@ -185,19 +194,68 @@ class PayrollController extends Controller
 
     public function deletePayrollFiles($id){
         $PayrollFile = PayrollFile::find($id);
-        $Deduction = Deduction::where('payroll_id', $id);
 
-        $Deduction->delete();
-        $PayrollFile->delete();
-
+        if ($PayrollFile) {
+            $id1 = $PayrollFile->id;
+            Deduction::where('payroll_id', $id1)->delete();
+            Modify::where('payroll_id', $id1)->delete();
+            $PayrollFile->delete();
+        }
         return response()->json([
             'status'=>200,
             'message'=>"Deleted Successfully",
         ]);
     }
     
-    public function storepayroll($payrollID, $statID){
+    public function storepayroll($payrollID, $statID, $offID){
         $payroll = Payroll::find($payrollID);
+        $office = Office::all()->where('office_name', '!=', 'UNKNOWN');
+        $PayrollFile = PayrollFile::where('payroll_ID', $payroll->id)->first();
+        
+        if($offID == "All"){
+            $finalCond = 'o.id != ' . 0; 
+        }
+        else{
+            $office1 = Office::where('id', $offID)->first();
+            $offgroup = $office1->group_by;
+            $finalCond = $offgroup == 0 ? 'o.id = ' . $offID : 'o.group_by = ' . $offgroup;
+        }
+
+        $deduction = Deduction::join('payroll_files as pf', 'deductions.payroll_id', '=', 'pf.id')
+        ->join('employees as emp', 'pf.emp_id', '=', 'emp.emp_ID')
+        ->join('offices as o', 'emp.emp_dept', '=', 'o.id')
+        ->where('pf.payroll_ID', $payrollID)
+        ->whereRaw($finalCond)
+        ->get();
+
+        if($PayrollFile){
+            $modifyRef = Modify::where('pay_id', $payrollID)
+            ->join('offices AS o', 'modifies.off_id', '=', 'o.id')
+            ->where('action', 'Refund')
+            ->whereRaw($finalCond)
+            ->get();
+        
+            $modifyRef = $modifyRef->groupBy('column')
+            ->map(function ($group) {
+                return $group->sum('amount');
+            });
+
+            $modifyDed = Modify::where('pay_id', $payrollID)
+            ->join('offices AS o', 'modifies.off_id', '=', 'o.id')
+            ->where('action', 'Deduction')
+            ->whereRaw($finalCond)
+            ->get();
+
+            $modifyDed = $modifyDed->groupBy('column')
+            ->map(function ($group) {
+                return $group->sum('amount');
+            });
+
+        }else{
+            $modifyRef = null;
+            $modifyDed = null;
+        }
+
         $campId = $payroll->campus_id;
         $startDate = $payroll->payroll_dateStart;
         $endDate = $payroll->payroll_dateEnd;
@@ -210,28 +268,59 @@ class PayrollController extends Controller
             $employee = Employee::all()->where('emp_status', $statID)->where('camp_id', $campId);
         }
 
-        try {
-        $pfiles = DB::table('payroll_files')
-        ->join('deductions', 'payroll_files.id', '=', 'deductions.payroll_id')
-        ->join('employees', 'payroll_files.emp_id', '=', 'employees.emp_ID')
-        ->select('payroll_files.id as pid', 'payroll_files.*', 'employees.*', 'deductions.*')
-        ->where('payroll_files.payroll_ID', '=', $payrollID)
-        ->where('payroll_files.camp_ID', '=', $campId)
-        ->where('payroll_files.stat_ID', '=', $statID)
-        ->where('payroll_files.startDate', '=', $startDate)
-        ->where('payroll_files.endDate', '=', $endDate)
-        ->get();
-        
-        $empStat = Status::find($statID);
-        $empStat = $empStat->status_name;
-        $currentcamp = DB::select("SELECT * FROM campuses WHERE id ='$campId' ");
+        // try {
+            $pfiles = DB::table('payroll_files AS pf')
+            ->join('deductions AS d', 'pf.id', '=', 'd.payroll_id')
+            ->join('employees AS e', 'pf.emp_id', '=', 'e.emp_ID')
+            ->join('offices AS o', 'e.emp_dept', '=', 'o.id')
+            ->leftJoinSub(function ($query) {
+                $query->from('modifies')
+                    ->select('payroll_id', 
+                        DB::raw('SUM(CASE WHEN action = "Refund" THEN amount ELSE 0 END) as sumRef'),
+                        DB::raw('SUM(CASE WHEN action = "Deduction" THEN amount ELSE 0 END) as sumDed')
+                    )
+                    ->groupBy('payroll_id');
+            }, 'm', 'pf.id', '=', 'm.payroll_id')
+            ->select('pf.id as pid', 'pf.*', 'e.*', 'd.*', 'o.*', 'm.sumRef', 'm.sumDed')
+            ->where('pf.payroll_ID', '=', $payrollID)
+            ->where('pf.camp_ID', '=', $campId)
+            ->where('pf.stat_ID', '=', $statID)
+            ->where('pf.startDate', '=', $startDate)
+            ->where('pf.endDate', '=', $endDate)
+            ->whereRaw($finalCond)
+            ->get();
+            
+            $empStat = Status::find($statID);
+            $empStat = $empStat->status_name;
+            $currentcamp = DB::select("SELECT * FROM campuses WHERE id ='$campId' ");
 
-        $codes = Code::where('payroll_id', $payrollID)->get();
+            $start = new \DateTime($startDate);
+            $end = new \DateTime($endDate);
+
+            $middle = (clone $start)->setDate($start->format('Y'), $start->format('m'), 15);
+
+            $month = $start->format('F');
+            $firstHalf = $month.' '.$start->format('j') .'-'. $middle->format('j, Y');
+            $secondHalf = $middle->modify('+1 day')->format('F j') .'-'. $end->format('j, Y');
+
+            $codes = Code::where('payroll_id', $payrollID)->get();
+
+            if($statID == 1){
+                $page = "storepayroll";
+            }
+            if($statID == 4){
+                $page = "storepayroll_jo";
+            }
                  
             if(auth()->user()->role == "Administrator" || auth()->user()->role == "Payroll Administrator"){
                 $status = Status::all();
                 $camp = Campus::all();
-                return view('payroll.storepayroll', compact('camp', 'status', 'currentcamp', 'empStat', 'pfiles', 'campId', 'statID', 'payrollID', 'employee', 'codes', 'days'));
+                if($PayrollFile){
+                    return view('payroll.'.$page, compact('camp', 'office', 'offID', 'status', 'currentcamp', 'empStat', 'pfiles', 'campId', 'statID', 'payrollID', 'employee', 'codes', 'days', 'firstHalf', 'secondHalf', 'deduction', 'modifyRef', 'modifyDed'));
+                }
+                else{
+                    return view('payroll.'.$page, compact('camp', 'office', 'offID', 'status', 'currentcamp', 'empStat', 'pfiles', 'campId', 'statID', 'payrollID', 'employee', 'codes', 'days', 'firstHalf', 'secondHalf', 'modifyRef', 'modifyDed'));
+                }
             }
             else{
                 if(auth()->user()->campus_id != $campId){
@@ -240,12 +329,17 @@ class PayrollController extends Controller
                 else{
                     $status = Status::where('status_name', '!=', 'Regular')->get();
                     $camp = Campus::find(auth()->user()->campus_id)->get();
-                    return view('payroll.storepayroll', compact('camp', 'status', 'currentcamp', 'empStat', 'pfiles', 'campId', 'statID', 'payrollID', 'employee', 'codes', 'days'));
+                    if($PayrollFile){
+                        return view('payroll.'.$page, compact('camp', 'office', 'offID', 'status', 'currentcamp', 'empStat', 'pfiles', 'campId', 'statID', 'payrollID', 'employee', 'codes', 'days', 'firstHalf', 'secondHalf', 'modifyRef', 'modifyDed'));
+                    }
+                    else{
+                        return view('payroll.'.$page, compact('camp', 'office', 'offID', 'status', 'currentcamp', 'empStat', 'pfiles', 'campId', 'statID', 'payrollID', 'employee', 'codes', 'days', 'firstHalf', 'secondHalf', 'modifyRef', 'modifyDed'));
+                    }
                 }
             }
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'An error occurred: ' . 'You do not have permission to access this page'); 
-        }
+        // } catch (\Exception $e) {
+        //     return redirect()->back()->with('error', 'An error occurred: ' . 'You do not have permission to access this page'); 
+        // }
     }
 
     public function updateCode(Request $request) {
@@ -294,43 +388,139 @@ class PayrollController extends Controller
         }
     }
 
-    public function showPdf($payrollID, $statID)
+    public function showPdf($payrollID, $statID, $pid, $offid)
     {
-        $deduction = Deduction::where('payroll_id', $payrollID)->exists();
-        $payrolls = Payroll::where('id', $payrollID)->first();
-        $campID = $payrolls->campus_id;
-        $dateStart = $payrolls->payroll_dateStart;
-        $dateEnd = $payrolls->payroll_dateEnd;
-        $campusID = $payrolls->campus_id;
+        $deduct = "deductions";
+        if($offid == "All" && $statID == 1){
+            return redirect()->back()->with('error', 'Select Office / Department first');
+        }
+        $offCond = $offid !== 'All' ? '=' :  '!=';
+        $office = Office::where('id', $offid)->first();
         
-        $dateStartFormatted = date('F d', strtotime($dateStart));
-        $dateEndFormatted = date('d, Y', strtotime($dateEnd));
+        if($statID == 1){
+            $offgroup = $office->group_by;
+            $finalCond = $offgroup == 0 ? 'of.id = ' . $offid : 'of.group_by = ' . $offgroup;
+        }
+        if($statID != 1){
+            $finalCond = 'of.id != 0';
+        }
+        $payroll = Payroll::find($payrollID);
+        $modify = Modify::where('pay_id', $payroll->id)
+        ->join('offices as of', 'modifies.off_id', '=', 'of.id')
+        ->whereRaw($finalCond)
+        ->get();
 
-        $dateRangeFormatted = $dateStartFormatted . ' - ' . $dateEndFormatted;
+        $modify1 = Modify::where('pay_id', $payroll->id)
+        ->join('offices as of', 'modifies.off_id', '=', 'of.id')
+        ->get();
 
-        $statuses = Status::where('id', $statID)->first();
+        $modifyref = Modify::where('pay_id', $payroll->id)
+        ->join('offices as of', 'modifies.off_id', '=', 'of.id')
+        ->where('action', 'Refund')
+        ->whereRaw($finalCond)
+        ->get();
+
+        $totalref = 0;
+        $totalref += $modifyref->sum('amount');
+        
+        $modifyref1 = Modify::where('pay_id', $payroll->id)
+        ->join('offices as of', 'modifies.off_id', '=', 'of.id')
+        ->where('action', 'Refund')
+        ->get();
+
+        $totalref1 = 0;
+        $totalref1 += $modifyref1->sum('amount');
+
+        $modifyded = Modify::where('pay_id', $payroll->id)
+        ->join('offices as of', 'modifies.off_id', '=', 'of.id')
+        ->where('action', 'Deduction')
+        ->whereRaw($finalCond)
+        ->get();
+
+        $totalded = 0;
+        $totalded += $modifyded->sum('amount');
+
+        $modifyded1 = Modify::where('pay_id', $payroll->id)
+        ->join('offices as of', 'modifies.off_id', '=', 'of.id')
+        ->where('action', 'Deduction')
+        ->get();
+
+        $totalded1 = 0;
+        $totalded1 += $modifyded1->sum('amount');
+
+        $campID = $payroll->campus_id;
+        $dateStart = $payroll->payroll_dateStart;
+        $dateEnd = $payroll->payroll_dateEnd;
+        
+        if ($statID == 1 || $statID == 4) {
+            $start = new \DateTime($dateStart);
+            $end = new \DateTime($dateEnd);
+
+            $middle = (clone $start)->setDate($start->format('Y'), $start->format('m'), 15);
+
+            $month = $start->format('F');
+            $firstHalf = $month.' '.$start->format('j') .'-'. $middle->format('j, Y');
+            $secondHalf = $middle->modify('+1 day')->format('F j') .'-'. $end->format('j, Y');
+        }
+        
+        $statuses = Status::find($statID);
         $code = Code::where('payroll_id', $payrollID)->get();
         
         $datas = DB::table('payroll_files')
-        ->join('deductions', 'payroll_files.id', '=', 'deductions.payroll_id')
-        ->join('employees', 'payroll_files.emp_id', '=', 'employees.emp_ID')
-        ->select('payroll_files.id as pid', 'payroll_files.*', 'employees.*', 'deductions.*')
-        ->where('payroll_files.payroll_ID', '=', $payrollID)
-        ->where('payroll_files.camp_ID', '=', $campID)
-        ->where('payroll_files.stat_ID', '=', $statID)
-        ->where('payroll_files.startDate', '=', $dateStart)
-        ->where('payroll_files.endDate', '=', $dateEnd)
-        ->get();
+            ->join($deduct, 'payroll_files.id', '=', $deduct . '.payroll_id')
+            ->join('employees', 'payroll_files.emp_id', '=', 'employees.emp_ID')
+            ->join('offices as of', 'employees.emp_dept', '=', 'of.id')
+            ->leftJoinSub(function ($query) {
+                $query->from('modifies')
+                    ->select('payroll_id', 
+                        DB::raw('SUM(CASE WHEN action = "Refund" THEN amount ELSE 0 END) as sumRef'),
+                        DB::raw('SUM(CASE WHEN action = "Deduction" THEN amount ELSE 0 END) as sumDed')
+                    )
+                    ->groupBy('payroll_id');
+            }, 'm', 'payroll_files.id', '=', 'm.payroll_id')
+            ->select('payroll_files.id as pid', 'payroll_files.*', 'employees.*', $deduct . '.*', 'm.sumRef', 'm.sumDed')
+            ->where('payroll_files.payroll_ID', $payrollID)
+            ->where('payroll_files.camp_ID', $campID)
+            ->where('payroll_files.stat_ID', $statID)
+            ->where('payroll_files.startDate', $dateStart)
+            ->where('payroll_files.endDate', $dateEnd)
+            ->whereRaw($finalCond)
+            ->get();
+        
+        $chunkedDatas = $datas->chunk(15); // Split the data into chunks of 15 rows
 
-        $chunkedDatas = $datas->chunk(15); // Split the data into chunks of 10 rows
+        $datas1 = DB::table('payroll_files')
+        ->join($deduct, 'payroll_files.id', '=', $deduct . '.payroll_id')
+        ->join('employees', 'payroll_files.emp_id', '=', 'employees.emp_ID')
+        ->join('offices as of', 'employees.emp_dept', '=', 'of.id')
+        ->leftJoinSub(function ($query) {
+            $query->from('modifies')
+                ->select('payroll_id', 
+                    DB::raw('SUM(CASE WHEN action = "Refund" THEN amount ELSE 0 END) as sumRef'),
+                    DB::raw('SUM(CASE WHEN action = "Deduction" THEN amount ELSE 0 END) as sumDed')
+                )
+                ->groupBy('payroll_id');
+        }, 'm', 'payroll_files.id', '=', 'm.payroll_id')
+        ->select('payroll_files.id as pid', 'payroll_files.*', 'employees.*', $deduct . '.*', 'm.sumRef', 'm.sumDed')
+        ->where('payroll_files.payroll_ID', $payrollID)
+        ->where('payroll_files.camp_ID', $campID)
+        ->where('payroll_files.stat_ID', $statID)
+        ->where('payroll_files.startDate', $dateStart)
+        ->where('payroll_files.endDate', $dateEnd)
+        ->get();
+    
+        $chunkedDatas1 = $datas1->chunk(15); // Split the data into chunks of 15 rows
 
         // $customPaper = array(0, 0, 612, 1008);
         $customPaper = array(0, 0, 550, 1008);
         // Use different view templates for different statuses
         $viewTemplate = $statuses->status_name == "Regular" ? 'payroll.pdf_payrolform1' : 'payroll.pdf_payrolform';
-        $pdf = \PDF::loadView($viewTemplate, compact('chunkedDatas', 'dateRangeFormatted', 'code'))->setPaper($customPaper, 'landscape');
+        $pdf = \PDF::loadView($viewTemplate, compact('chunkedDatas', 'chunkedDatas1', 'firstHalf', 'secondHalf', 'code', 'modify', 'modify1', 'modifyref', 'modifyref1','modifyded', 'modifyded1','totalref', 'totalref1','totalded', 'totalded1','pid', 'offid'))->setPaper($customPaper, 'landscape');
 
-        $pdf->setOptions(['enable_php' => true]); // Enable inline PHP code in the view
+        $pdf->setOptions([
+            'enable_php' => true, 
+            'enable_js' => true,  
+        ]);
         
         $pdf->setCallbacks([
             'before_render' => function ($domPdf) {
@@ -398,4 +588,15 @@ class PayrollController extends Controller
         //return $pdf->stream();
         return view('payroll.payslip_generate', compact('payslip', 'totalPages'));
     }
+
+    public function saltypepUp($id, $val){
+        $pfile = [
+            'sal_type' => $val
+        ];
+
+        PayrollFile::where('id', $id)->update($pfile);
+
+        return redirect()->back()->with('success', 'Updated Successfully');
+    }
+
 }

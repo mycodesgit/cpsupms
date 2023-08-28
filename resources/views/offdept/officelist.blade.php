@@ -20,7 +20,7 @@
                             <div class="form-row">
                                 <div class="col-md-12">
                                     <label for="exampleInputName">Office Name:</label>
-                                    <input type="hidden" name="uid" value="{{ $current_route == 'officeEdit' ? $offEdit->id : '' }}">
+                                    <input type="hidden" name="oid" value="{{ $current_route == 'officeEdit' ? $offEdit->id : '' }}">
                                     <input type="text" name="OfficeName" value="{{ $current_route == 'officeEdit' ? $offEdit->office_name : '' }}" oninput="var words = this.value.split(' '); for(var i = 0; i < words.length; i++){ words[i] = words[i].substr(0,1).toUpperCase() + words[i].substr(1); } this.value = words.join(' ');" class="form-control">  
                                 </div>
                             </div>
@@ -34,6 +34,22 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="form-group">
+                            <div class="form-row">
+                                <div class="col-md-12">
+                                    <label for="exampleInputName">Group By:</label>
+                                    <select class="form-control select2" name="GroupBy" style="width: 100%;" required>
+                                        <option value="0"> None </option>
+                                        @foreach($office as $off)
+                                            @if($off->office_name !== 'UNKNOWN')
+                                                <option value="{{ $off->id }}" {{ $current_route ==  'officeEdit' ? $off->id == $offEdit->group_by ? 'selected' : '' : ''}}>{{ $off->office_name }}</option>
+                                            @endif
+                                        @endforeach
+                                    </select>   
+                                </div>
+                            </div>
+                        </div> 
 
                         <div class="form-group">
                             <div class="form-row">
@@ -72,26 +88,33 @@
                                     <th>No</th>
                                     <th>Office</th>
                                     <th>Abbreviation</th>
+                                    <th>Group</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody id="tbody">
                                 @php $no = 1; @endphp
                                 @foreach($office as $office)
-                                <tr id="tr-{{ $office->id}}">
-                                    <td>{{ $no++ }}</td>
-                                    <td>{{ $office->office_name }}</td>
-                                    <td>{{ $office->office_abbr }}</td>
-                                    <td>
-                                        <a href="{{ route('officeEdit', $office->id) }}" class="btn btn-info btn-xs">
-                                            <i class="fas fa-exclamation-circle"></i>
-                                        </a>
-                                        <button value="{{ $office->id}}" class="btn btn-danger btn-xs office-delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
+                                    @php
+                                        $groupOffice = $office->group_by ? \App\Models\Office::find($office->group_by) : null;
+                                    @endphp
+                                    <tr id="tr-{{ $office->id}}">
+                                        <td>{{ $no++ }}</td>
+                                        <td>{{ $office->office_name }}</td>
+                                        <td>{{ $office->office_abbr }}</td>
+                                        <td>{{ $groupOffice ? $groupOffice->office_abbr : 'None' }}</td>
+                                        <td>
+                                            <a href="{{ route('officeEdit', $office->id) }}" class="btn btn-info btn-xs">
+                                                <i class="fas fa-exclamation-circle"></i>
+                                            </a>
+                                            <button value="{{ $office->id }}" class="btn btn-danger btn-xs office-delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
                                 @endforeach
+
+
                             </tbody>
                         </table>
                     </div>

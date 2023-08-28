@@ -107,14 +107,17 @@ th{
                                                 <th width="6%">Emp. ID</th>
                                                 <th width="10%">Full Name</th>
                                                 <th>Dept/Office</th>
-                                                <th>Position</th>
-                                                <th>Monthly Salary</th>
-                                                <th>Total Add.</th>
+                                                <th>Designation</th>
+                                                <th>Gross Income</th>
+                                                @php
+                                                    $firstHalfformated = preg_replace('/(January|February|March|April|May|June|July|August|September|October|November|December)/', 'Add ', $firstHalf);
+                                                @endphp
+                                                <th>{{ $firstHalfformated }}</th>
+                                                <th>Absent</th>
+                                                <th>Late</th>
                                                 <th>Earn for period</th>
                                                 <th>Total Ded.</th>
                                                 <th>Net amount</th>
-                                                <th>{{ $firstHalf }}</th>
-                                                <th>{{ $secondHalf }}</th>
                                                 <th width="13%">Action</th>
                                             </tr>
                                     </thead>
@@ -124,29 +127,30 @@ th{
                                         @endphp
                                         @foreach ($pfiles as $p)
                                             @php 
-                                                $RamountTotal = 0;
                                                 $absent = $p->add_less_abs;
-                                                $total_add = floatval(sprintf("%.2f",$p->add_sal_diff + $p->add_nbc_diff + $p->add_step_incre - $absent, 2)); 
+                                                $late = $p->less_late;
                                                 
-                                                $total_deduct = floatval(sprintf("%.2f",$p->eml + $p->pol_gfal + $p->consol + $p->ed_asst_mpl + $p->loan + $p->rlip + $p->gfal + $p->computer 
-                                                + $p->mpl + $p->prem + $p->calam_loan + $p->mp2 + $p->philhealth + $p->holding_tax + $p->lbp + $p->cauyan + $p->projects + $p->nsca_mpc + $p->med_deduction
-                                                + $p->grad_guarantor + $p->cfi + $p->csb + $p->fasfeed + $p->dis_unliquidated, 2));
+                                                $total_deduct = floatval(sprintf("%.2f", $p->projects + $p->nsca_mpc + $p->grad_guarantor + $p->tax1 + $p->tax2, 2));
 
-                                                $Rrate_per_day = $p->salary_rate / $days;
-                                                $Rrate_per_hour = $Rrate_per_day / 8;
-                                                $Ramount = $Rrate_per_hour * $p->number_hours;
-                                                
-                                                $Jrate_per_hour = $p->salary_rate / 8;
-
-                                                $RamountReg = $p->salary_rate + $total_add;
-
-                                                $RamountTotal += $RamountReg;
-                                                
                                                 $saltype = $p->sal_type;
+                                                $salaryhalf = round(($p->salary_rate / 2), 2);
+                                                if($saltype == 1){
+                                                    $salfirsthalf = 0.00;
+                                                }
+                                                else{
+                                                    $salfirsthalf = round(($p->salary_rate / 2), 2);
+                                                }
 
-                                                $earn = round($Ramount + $total_add - $total_deduct, 2);
+                                                $Rrate_per_day = ($p->salary_rate / 2) / $days;
+                                                $Rrate_per_hour = $Rrate_per_day / 8;
+                                                
+                                                $Jrate_per_hour = ($p->salary_rate / 2) / 8;
+
+                                                $GrossIncome = ($p->salary_rate / 2) - $absent - $late;
+                                                
+                                                $earn = round($GrossIncome + $salfirsthalf - $total_deduct, 2);
                                                 $decimalPoint = ($earn * 100) % 100;
-                                                $earns = ($Ramount + $total_add - $total_deduct) / 2;
+                                                $earns = ($GrossIncome + $salfirsthalf - $total_deduct);
                                              
                                                 if ($saltype == 1) {
                                                     if ($decimalPoint % 2 === 0) {
@@ -157,10 +161,10 @@ th{
                                                         $earns = floor($earns * 100) / 100;
                                                     }
                                                     $sechalearn = $earns;
-                                                    $sechalearn1 = ($Ramount + $total_add - $total_deduct) /  2;
+                                                    $sechalearn1 = ($GrossIncome + $salfirsthalf  - $total_deduct);
                                                 } else {
-                                                    $sechalearn = $Ramount + $total_add - $total_deduct;
-                                                    $sechalearn1 = $Ramount + $total_add - $total_deduct;
+                                                    $sechalearn = $GrossIncome + $salfirsthalf;
+                                                    $sechalearn1 = $GrossIncome + $salfirsthalf   - $total_deduct;
                                                 }
 
                                             @endphp
@@ -170,15 +174,15 @@ th{
                                                 <td>{{ $p->lname }} {{ $p->fname }} {{ $p->mname }}</td>
                                                 <td>{{ $p->office_abbr }}</td>
                                                 <td>{{ $p->position }}</td>
-                                                <td>{{ number_format($p->salary_rate, 2) }}</td>
-                                                <td id="addition-{{ $p->pid }}">{{ number_format($total_add, 2); }}</td>
-                                                <td class="text-danger">{{ number_format($RamountReg, 2) }}</td>
-                                                <td id="deduct-{{ $p->pid }}">{{ number_format($total_deduct, 2); }}</td>
-                                                <td id="net-{{ $p->pid }}" class="text-danger">{{ number_format($Ramount + $total_add - $total_deduct, 2) }}</td>
-                                                <td class="firstHalf @if($sechalearn1 <= 3000)text-danger @endif">{{ $saltype == 2 || $saltype == 1 ? number_format($sechalearn1, 2) : '0.00' }}</td>
+                                                <td>{{ number_format(($p->salary_rate / 2), 2) }}</td>
+                                                <td class="text-danger">{{ $saltype == 1 ? number_format(0, 2) : number_format(($p->salary_rate / 2), 2) }}</td>
+                                                <td class="text-danger">{{ number_format($p->add_less_abs, 2) }}</td>
+                                                <td class="text-danger">{{ number_format($p->less_late, 2) }}</td>
+                                                <td id="deduct-{{ $p->pid }}">{{ number_format($GrossIncome + $salfirsthalf, 2); }}</td>
+                                                <td id="net-{{ $p->pid }}" class="text-danger">{{ number_format($total_deduct, 2) }}</td>
+                                                <td class="firstHalf @if($sechalearn1 <= 3000)text-danger @endif">{{ number_format($sechalearn1, 2) }}</td>
                                                 {{-- <td class="secondtHalf @if($earns + $p->sumRef - $p->sumDed <= 3000)text-danger @endif">{{ $saltype == 3 || $saltype == 1 ? number_format($sechalearn, 2) : '0.00' }}</td> --}}
-                                                <td class="secondtHalf @if($sechalearn + $p->sumRef - $p->sumDed <= 3000)text-danger @endif">{{ $saltype == 3 || $saltype == 1 ? number_format($sechalearn + $p->sumRef - $p->sumDed, 2) : '0.00';}}</td>
-                                               
+                                              
                                                 <td>
                                                     <div class="btn-group">
                                                         <button type="button" style="height:32px;" class="btn btn-{{ $p->sal_type == 1 ? 'secondary' : ''}}{{ $p->sal_type == 2 ? 'primary' : ''}}{{ $p->sal_type == 3 ? 'success' : ''}} dropdown-toggle" data-toggle="dropdown" aria-expanded="false" title="deductions">
@@ -186,15 +190,13 @@ th{
                                                         </button>
                                                         <div class="dropdown-menu" x-out-of-boundaries="" style="">
                                                             <a href="{{ route('saltypepUp', ['id' => $p->pid, 'val' => '1']) }}" class="dropdown-item">1.) half</a>
-                                                            <a href="{{ route('saltypepUp', ['id' => $p->pid, 'val' => '2']) }}" class="dropdown-item">2.) 1st half</a>
-                                                            <a href="{{ route('saltypepUp', ['id' => $p->pid, 'val' => '3']) }}" class="dropdown-item">3.) 2nd half</a>
+                                                            <a href="{{ route('saltypepUp', ['id' => $p->pid, 'val' => '2']) }}" class="dropdown-item">2.) Add {{ $firstHalf }}</a>
                                                         </div>                                                        
                                                     </div>
                                                     <div class="btn-group">
                                                         <button type="button" style="height:32px;" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-expanded="false" title="deductions">
                                                         </button>
                                                         <div class="dropdown-menu" x-out-of-boundaries="" style="">
-                                                        <button id="{{ $p->pid }}" value="1" data-date="{{ $firstHalf }}" data-modes="1"  style="height:32px;" class="dropdown-item additional" title="additionals">Additional {{ $firstHalf }}</button>
                                                         <button id="{{ $p->pid }}" value="1" data-date="{{ $firstHalf }}" data-modes="3" class="dropdown-item deductions">Deduction {{ $firstHalf }}</button>
                                                         <button id="{{ $p->pid }}" value="2" data-date="{{ $secondHalf }}" data-modes="4" class="dropdown-item deductions">Adjustments {{ $secondHalf }}</button>
                                                         </div>

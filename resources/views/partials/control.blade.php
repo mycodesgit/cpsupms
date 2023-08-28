@@ -16,7 +16,7 @@
             @php
                 $encryptedId = encrypt(auth()->user()->campus_id);
             @endphp
-            <a href="{{ route('viewPayroll', $encryptedId) }}" class="btn btn-app {{$current_route == 'viewPayroll' || $current_route == 'storepayroll' || $current_route == 'payslip' ? 'active' : ''}}">
+            <a href="{{ route('viewPayroll', $encryptedId) }}" class="btn btn-app {{$current_route == 'viewPayroll' || $current_route == 'storepayroll' || $current_route == 'storepayroll-jo' || $current_route == 'payslip' ? 'active' : ''}}">
                 <i class="fas fa-file-invoice"></i> Payroll
             </a>
             <a href="{{ route('officeList') }}" class="btn btn-app {{$current_route=='officeList' || $current_route=='officeEdit' ?'active':''}}">

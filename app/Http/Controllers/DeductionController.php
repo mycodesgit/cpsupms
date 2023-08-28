@@ -5,14 +5,20 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\PayrollFile; 
 use App\Models\Deduction;
+use App\Models\Deductiontwo;
 use App\Models\Campus;
 use App\Models\Status;
 use App\Models\Employee;
 
 class DeductionController extends Controller
 {
-    public function deductionsEdit($id){
+    public function deductionsEdit(Request $request){
+        $id = $request->id;
+        $cat = $request->cat;
+        $modes = $request->modes;
+     
         $deductions = Deduction::where('payroll_id', $id)->select('*')->get();
+        
         $payroll = PayrollFile::find($id);
         $statID = $payroll->stat_ID;
         $stat = Status::find($statID);
@@ -37,18 +43,17 @@ class DeductionController extends Controller
     }
     
     public function deductionsUpdate(Request $request){
+        $cat = $request->cat;
         $id = $request->payroll_id;
         $payroll = PayrollFile::find($id);
         $statID = $payroll->stat_ID;
         $emp_id = $payroll->emp_id;
         $employee = Employee::where('emp_ID', $emp_id)->first();
-        $emp_salary = $employee->emp_salary;
+        $emp_salary = $payroll->salary_rate;
         $stat = Status::find($statID);
         $emp_statname = $stat->status_name;
-        $tax1 = $payroll->tax1;
         $tax2 = floatval(sprintf("%.2f", $request->tax2 * $payroll->total_salary));
         $tax2 = number_format($tax2, 2);
-        $net_jo = number_format($payroll->total_salary - $tax1 - $tax2, 2);
         
         $deduction = Deduction::where('payroll_id', $id)->first();
         
@@ -59,8 +64,13 @@ class DeductionController extends Controller
 
         $additional = $deduction->add_sal_diff + $deduction->add_nbc_diff + $deduction->add_step_incre;
 
-        $rlip = $emp_salary + $additional - $request->add_less_abs;
-        $rlip_left = $rlip * 0.09;
+        $earn = $emp_salary + $additional - $request->add_less_abs;
+        $rlip_left = round(($earn * 0.09),2);
+        $philhealth = round(($earn * 0.02),2);
+
+        if($emp_salary >= 80000){
+            $philhealth = 1600.00;
+        }
 
         $net_regular = floatval(sprintf("%.2f",$emp_salary + $additional - $total_deduct, 2));
 
@@ -71,17 +81,21 @@ class DeductionController extends Controller
             $tax2 = '0.00';
         }
         if($emp_statname == "Job Order" || $emp_statname == "Part-time"){
+            $con = $payroll->sal_type == 1 ? 2 : 1;
+            $half = round(($emp_salary - $request->add_less_abs - $request->less_late) / $con, 2);            
+            $tax1 = floatval(sprintf("%.2f",$half * 0.01));
+
             Deduction::where('payroll_id', $id)->update([
-                    'tax2' => $tax2
-            ]);
-            return response()->json([
-                'status'=>200,
-                'empstat'=>'Job Order',
-                'id'=>$id,
-                'tax2'=>$tax2,
-                'net'=>$net_jo,
+                'tax1' => $tax1,
+                'tax2' => $request->tax_two,
+                'projects' => $request->projects,
+                'nsca_mpc' => $request->nsca_mpc,
+                'grad_guarantor' => $request->grad_guarantor,
+                'add_less_abs' => $request->add_less_abs,
+                'less_late' => $request->less_late,
             ]);
         }
+
         else{
             Deduction::where('payroll_id', $id)->update([
                 'tax2' => '0.00',
@@ -95,7 +109,9 @@ class DeductionController extends Controller
                 'computer' => $request->computer,
                 'mpl' => $request->mpl,
                 'prem' => $request->prem,
-                'philhealth' => $request->philhealth,
+                'calam_loan' => $request->calam_loan,
+                'mp2' => $request->mp2,
+                'philhealth' => $philhealth,
                 'holding_tax' => $request->holding_tax,
                 'lbp' => $request->lbp,
                 'cauyan' => $request->cauyan,
@@ -108,19 +124,22 @@ class DeductionController extends Controller
                 'fasfeed' => $request->fasfeed,
                 'dis_unliquidated' => $request->dis_unliquidated,
                 'add_less_abs' => $request->add_less_abs,
+                'less_late' => $request->less_late,
             ]);
-
-            return redirect()->back()->with('success', 'Deductions updated successfully');    
+                
         }
+        
+        return redirect()->back()->with('success', 'Deductions updated successfully');    
     }
 
     public function additionalUpdate(Request $request){
+        $cat = $request->cat;
         $id = $request->payroll_id;
         $payroll = PayrollFile::find($id);
         $statID = $payroll->stat_ID;
         $emp_id = $payroll->emp_id;
         $employee = Employee::where('emp_ID', $emp_id)->first();
-        $emp_salary = $employee->emp_salary;
+        $emp_salary = $employee->salary_rate;
         $stat = Status::find($statID);
         $emp_statname = $stat->status_name;
         
@@ -133,11 +152,17 @@ class DeductionController extends Controller
 
         $additional = $request->add_sal_diff + $request->add_nbc_diff + $request->add_step_incre;
 
-        $rlip = $emp_salary + $additional - $deduction->add_less_abs;
-        $rlip_left = $rlip * 0.09;
+        $earn = $emp_salary + $additional - $deduction->add_less_abs;
+        $rlip_left = round(($earn * 0.09),2);
+
+        $philhealth = round(($earn * 0.02),2);
+
+        if($emp_salary >= 80000){
+            $philhealth = 1600.00;
+        }
         
         $net_regular = floatval(sprintf("%.2f",$emp_salary + $additional - $total_deduct, 2));
-
+        
         Deduction::where('payroll_id', $id)->update([
             'add_sal_diff' => $request->add_sal_diff,
             'add_nbc_diff' => $request->add_nbc_diff,

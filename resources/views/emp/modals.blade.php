@@ -90,7 +90,7 @@
                                                 <i class="fas fa-building"></i>
                                             </span>
                                         </div>
-                                        <select class="form-control select2bs4" style="width: 90%;" name="Office" required>
+                                        <select class="form-control select2" style="width: 90%;" name="Office" required>
                                             <option value=""> --- Select Here --- </option>
                                             @foreach ($offices as $q)
                                                 <option value="{{ $q->id }}">{{ $q->office_name }}</option>
@@ -183,14 +183,14 @@
                                 </div>
     
                                 <div class="col-md-6" id="srate">
-                                    <label for="exampleInputName" id="rate-title">Daily Rate:</label>
+                                    <label for="exampleInputName" id="rate-title">Monthly Rate:</label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">
                                                 <i class="fas fa-coins"></i>
                                             </span>
                                         </div>
-                                        <input type="number" step="any" min="0" id="insrate" name="SalaryRate" placeholder="Daily Rate" class="form-control" required>
+                                        <input type="number" step="any" min="0" id="insrate" name="SalaryRate" placeholder="Monthly Rate" class="form-control" required>
                                     </div>
                                     <span id="error" style="color: #FF0000; font-size: 10pt;" class="form-text text-left SalaryRate_error"></span>
                                 </div>

@@ -28,7 +28,7 @@
                                             <i class="fas fa-info-circle"></i>
                                         </span>
                                     </div>
-                                    <select class="form-control" id="stat-name" name="statName" onchange="calculateDays()" required>
+                                    <select class="form-control" id="stat-name" name="statName" onchange="checkStat(this.value)" required>
                                         <option value=""> --- Select Here --- </option>
                                         @foreach ($status as $stat)
                                             <option value="{{ $stat->id }}">{{ $stat->status_name }}</option>
@@ -72,7 +72,7 @@
                             </div>
                         </div>
                     </div>
-
+                    
                     <div class="form-group">
                         <div class="form-row">
                             <div class="col-md-12">
@@ -89,6 +89,7 @@
                             </div>
                         </div>
                     </div>
+                   <!-- First date input -->
 
                     <div class="form-group">
                         <div class="form-row">
@@ -112,8 +113,28 @@
     </div>
 </div>
 @endif
-@if($current_route == "storepayroll")
-{{-- Storepayroll --}}
+@if($current_route == "storepayroll" || $current_route == "storepayroll-jo")
+<style>
+    .btn-group-toggle .btn {
+        background-color: #6c757d;
+        color: #fff;
+    }
+
+    .btn-group-toggle .btn.active {
+        background-color: green;
+    }
+
+    .custom-input-group {
+        display: flex;
+        justify-content: center;
+    }
+
+/* Add this CSS style for the checked radio button */
+.custom-input-group .btn input[type="radio"]:checked + span {
+    background-color: #FF0000; /* Replace 'your-color' with the desired background color */
+}
+
+</style>
 
 <div class="modal fade" id="modal-importPayrollsTwo">
     <div class="modal-dialog modal-m">
@@ -151,7 +172,7 @@
                             </div>
                         </div>
                     </div> 
-                    @if($empStat == "Regular")
+                    @if($empStat == "Regular" || $empStat == "Job Order")
                         <div class="form-group">
                             <div class="form-row">
                                 <div class="col-md-12">
@@ -159,7 +180,7 @@
                                     <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">
-                                                <i class="far fa-user"></i>
+                                                <i class="far fa-calendar"></i>
                                             </span>
                                         </div>
                                         <input type="number" name="number_hours" step="any" min="1" max="{{ $days }}" value="{{ $days }}" placeholder="No. of working Days" class="form-control" required>
@@ -176,7 +197,7 @@
                                     <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">
-                                                <i class="far fa-user"></i>
+                                                <i class="far fa-clock"></i>
                                             </span>
                                         </div>
                                         <input type="number" name="number_hours" step="any" min="1" placeholder="No. of Hours" class="form-control" required>
@@ -185,7 +206,7 @@
                                 </div>
                             </div>
                         </div>
-                    @elseif($empStat == "Job Order" || $empStat == "Part-time")  
+                    @elseif($empStat == "Part-time")  
                     <div class="form-group">
                         <div class="form-row">
                             <div class="col-md-12">
@@ -193,7 +214,7 @@
                                 <div class="input-group">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text">
-                                            <i class="far fa-user"></i>
+                                            <i class="far fa-calendar"></i>
                                         </span>
                                     </div>
                                     <select class="form-control select2" name="hr_day" style="width: 91%;" onchange="dayHours(this.value)" required>
@@ -213,7 +234,7 @@
                                 <div class="input-group">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text">
-                                            <i class="far fa-user"></i>
+                                            <i class="far fa-clock"></i>
                                         </span>
                                     </div>
                                     <input type="number" id="input-nh" name="number_hours" step="any" step="any" min="1" class="form-control" required>
@@ -245,6 +266,7 @@
         </div>
     </div>
 </div>
+
 <div class="modal fade" id="modal-codes">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
@@ -289,7 +311,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title">
-                    <i class="fas fa-plus"></i> Deductions
+                    <i class="fas fa-plus"></i> Deductions <span class="date-deduct"></span>
                 </h6>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -303,27 +325,36 @@
 
                     {{-- Job-Order --}}
                     @if($empStat == "Job Order" || $empStat == "Part-time" || $empStat == "Part-time/JO")
-                        <div class="form-group">
-                            <div class="form-row">
-                                <div class="col-md-12">
-                                    <label for="exampleInputName">Tax 2% </label>
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text">
-                                                <i class="fas fa-percent"></i>
-                                            </span>
-                                        </div>
-                                        <select class="select2 tax2" id="tax2" name="tax2"  style="width: 91%;">
-                                            <option value="0.00">N/A</option>
-                                            <option value="0.02">Yes</option>
-                                        </select>
+                    <div class="form-group">
+                        <h4><strong>GSIS DEDUCTIONS</strong></h4>
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <label for="exampleInputName">TAX 1%</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="far fa-clipboard"></i>
+                                        </span>
                                     </div>
+                                    <input type="number" id="tax_one" name="tax_one" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right" readonly>
                                 </div>
                             </div>
-                        </div>
+                            <div class="col-md-6">
+                                <label for="exampleInputName">TAX 2%</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="far fa-clipboard"></i>
+                                        </span>
+                                    </div>
+                                    <input type="number" id="tax_two" name="tax_two" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
+                                </div>
+                            </div>
+                    @endif
+                    
                     {{-- Regular --}}
-                    @else
-                        
+                    {{-- Storepayroll --}}
+                    @if($empStat == "Regular")
                         <div class="form-group">
                             <h4><strong>GSIS DEDUCTIONS</strong></h4>
                             <div class="form-row">
@@ -335,6 +366,7 @@
                                                 <i class="far fa-clipboard"></i>
                                             </span>
                                         </div>
+                                        <input type="hidden" name="cat" id="catd">
                                         <input type="number" id="eml" name="eml" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
                                     </div>
                                 </div>
@@ -390,7 +422,7 @@
                                                 <i class="far fa-clipboard"></i>
                                             </span>
                                         </div>
-                                        <input type="number" id="rlip" name="rlip" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
+                                        <input type="number" id="rlip" name="rlip" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right" readonly>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -440,6 +472,28 @@
                                         <input type="number" id="prem" name="prem" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
                                     </div>
                                 </div>
+                                <div class="col-md-4">
+                                    <label for="exampleInputName">Calaming Loan</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="far fa-clipboard"></i>
+                                            </span>
+                                        </div>
+                                        <input type="number" id="calam_loan" name="calam_loan" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="exampleInputName">MP2.</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="far fa-clipboard"></i>
+                                            </span>
+                                        </div>
+                                        <input type="number" id="mp2" name="mp2" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -454,7 +508,7 @@
                                                 <i class="far fa-clipboard"></i>
                                             </span>
                                         </div>
-                                        <input type="number" id="philhealth" name="philhealth" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
+                                        <input type="number" id="philhealth" name="philhealth" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right" readonly>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -490,7 +544,12 @@
                                         <input type="number" id="cauyan" name="cauyan" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                @endif
+                                @if($empStat == "Job Order")
+                                    <h4 class="pt-2"><strong>OTHER DEDUCTIONS</strong></h4>
+                                    <div class="form-row">
+                                @endif
+                                <div class="col-md-{{$empStat == "Regular" ? '4' : '6'}}">
                                     <label for="exampleInputName">Projects</label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
@@ -501,7 +560,7 @@
                                         <input type="number" id="projects" name="projects" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-{{$empStat == "Regular" ? '4' : '6'}}">
                                     <label for="exampleInputName">NSCA MPC</label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
@@ -512,6 +571,8 @@
                                         <input type="number" id="nsca_mpc" name="nsca_mpc" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
                                     </div>
                                 </div>
+
+                                @if($empStat == "Regular")
                             </div>
                         </div>
 
@@ -528,8 +589,9 @@
                                         <input type="number" id="med_deduction" name="med_deduction" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
-                                    <label for="exampleInputName">Grad SCH / Guarantor</label>
+                            @endif
+                                <div class="col-md-{{$empStat == "Regular" ? '4' : '6'}}">
+                                    <label for="exampleInputName">Graduate Shool {{$empStat == "Regular" ? '/ Guarantor' : ''}}</label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">
@@ -539,6 +601,7 @@
                                         <input type="number" id="grad_guarantor" name="grad_guarantor" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
                                     </div>
                                 </div>
+                                @if($empStat == "Regular")
                                 <div class="col-md-4">
                                     <label for="exampleInputName">CFI</label>
                                     <div class="input-group">
@@ -588,8 +651,9 @@
                                         <input type="number" id="dis_unliquidated" name="dis_unliquidated" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
-                                    <label for="exampleInputName">Less Absences incurred</label>
+                            @endif
+                                <div class="col-md-{{$empStat == "Regular" ? '4' : '6'}}">
+                                    <label for="exampleInputName">Less Absences</label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">
@@ -599,11 +663,26 @@
                                         <input type="number" id="add_less_abs" name="add_less_abs" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
                                     </div>
                                 </div>
+                                <div class="col-md-{{$empStat == "Regular" ? '4' : '6'}}">
+                                    <label for="exampleInputName">Less Late</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="far fa-clipboard"></i>
+                                            </span>
+                                        </div>
+                                        <input type="number" id="less_late" name="less_late" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
+                                    </div>
+                                </div>
+                        @if($empStat == "Regular")
                             </div>
                         </div>
-
                         @endif
-
+                        @if($empStat != "Regular")
+                                </div>
+                            </div>
+                        </div>
+                        @endif
                         <div class="form-group">
                             <div class="form-row">
                                 <div class="col-md-12">
@@ -627,13 +706,12 @@
     </div>
 </div>
 
-
 <div class="modal fade" id="modal-additional">
     <div id="modal-deduct" class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title">
-                    <i class="fas fa-plus"></i> Additional
+                    <i class="fas fa-plus"></i> Additional <span class="date-add"></span>
                 </h6>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -654,6 +732,7 @@
                                             <i class="far fa-clipboard"></i>
                                         </span>
                                     </div>
+                                    <input type="hidden" name="cat" id="cat">
                                     <input type="number" id="add_sal_diff" name="add_sal_diff" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
                                 </div>
                             </div>
@@ -703,5 +782,82 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="modal-modification">
+    <div id="modal-deduct" class="modal-dialog modal-lg">
+        <div class="modal-content">
+            
+            <div class="modal-header">
+                <h6 class="modal-title">
+                    <i class="fas fa-plus"></i> Adjustments  <span class="date-add"></span>
+                </h6>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <form class="form-horizontal" action="{{ route('modifyUpdate') }}" method="POST">
+                    @csrf
+                    <div class="form-group">
+                        <div class="form-row modify-show">
+                            
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-row">
+                            <div class="col-md-12">
+                                <button type="button" class="btn btn-danger" data-dismiss="modal">
+                                    Close
+                                </button>
+                                <button type="submit" name="btn-submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer justify-content-between">
+                <!-- <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save changes</button> -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="pdfoffice">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="form-group">
+                    <div class="form-row">
+                        <div class="col-md-12">
+                            <label for="exampleInputName">Office</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="far fa-user"></i>
+                                    </span>
+                                </div>
+                                <input type="text" id="halfmon" hidden>
+                                <select class="form-control select2" name="emp_ID" style="width: 91%;" onchange="redirectToTargetPage(event)" required>
+                                    <option value=""> --- Select Office --- </option>
+                                    @foreach($office as $off)
+                                        <option data-payrollId="{{ $payrollID }}" data-statId="{{ $statID }}" value="{{ $off->id }}">{{ $off->office_name }}</option>
+                                    @endforeach
+                                </select>                                                                                     
+                            </div>
+                            <span style="color: #FF0000; font-size: 10pt;" class="form-text text-left Status_error"></span>
+                        </div>
+                    </div>
+                </div> 
+            </div>
+            
+        </div>
+    </div>
+</div>
+
 @endif
 

@@ -19,17 +19,17 @@
             $("#qualification").show();
             $("#srate").hide();
             var insrate = document.getElementById("insrate");
-            insrate.placeholder = "Daily Rate";
+            insrate.placeholder = "Monthly Rate";
             insrate.value = "";
         }
     
         if(id == 4){
-            $("#rate-title").html("Daily Rate:");
+            $("#rate-title").html("Monthly Rate:");
             $("#qualification").hide();
             $("#srate").show();
-            $("#rate-title1").html("Daily Rate:");
+            $("#rate-title1").html("Monthly Rate:");
             var insrate = document.getElementById("insrate");
-            insrate.placeholder = "Daily Rate";
+            insrate.placeholder = "Monthly Rate";
             insrate.value = "";
         }
     }
@@ -47,14 +47,14 @@
         if(id == 2){
             $("#qualification1").show();
             var insrate1 = document.getElementById("insrate1");
-            insrate1.placeholder = "Daily Rate";
+            insrate1.placeholder = "Monthly Rate";
         }
     
         if(id == 4){
-            $("#rate-title1").html("Daily Rate:");
+            $("#rate-title1").html("Monthly Rate:");
             $("#qualification1").hide();
             var insrate1 = document.getElementById("insrate1");
-            insrate1.placeholder = "Daily Rate";
+            insrate1.placeholder = "Monthly Rate";
         }
     }
     function quali(id){
