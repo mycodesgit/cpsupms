@@ -32,7 +32,15 @@
     <!-- Style -->
     <link rel="stylesheet" href="{{ asset('template/dist/css/style.css') }}">
 </head>
-
+<style>
+    .disabled-link {
+        pointer-events: none;
+        /* Optionally, you can change the styling to indicate the link is disabled */
+        color: gray;
+        text-decoration: none;
+        cursor: not-allowed;
+    }
+</style>
 <body class="hold-transition layout-top-nav layout-navbar-fixed text-sm">
     <div class="wrapper">
         <nav class="main-header navbar navbar-expand-md navbar-light bg-greenn">
@@ -80,7 +88,7 @@
     <!-- Main Footer -->
     <footer class="main-footer">
         <div class="float-right d-none d-sm-inline mt-2">
-            Anything you want
+            
         </div>
         <strong>Maintain and Manage by <a href="#">MIS</a>.</strong> All rights reserved.
     </footer>
@@ -89,9 +97,19 @@
 @include('script.masterScript')
 @include('script.empScript')
 @include('script.userScript')
-@include('script.officeScript')
+@include('script.officeScript')+-
 @include('script.payrollScript')
+<script>
+    window.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+    });
 
+    window.addEventListener('keydown', function (e) {
+        if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J'))) {
+            e.preventDefault();
+        }
+    });
+</script>
 
 </body>
 </html>

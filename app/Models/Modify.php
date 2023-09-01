@@ -12,7 +12,8 @@ class Modify extends Model
         'payroll_id',
         'off_id',
         'column',
-        'action', // Add 'action' to the fillable array
+        'label',
+        'action', 
         'amount',
     ];
     //use HasFactory;

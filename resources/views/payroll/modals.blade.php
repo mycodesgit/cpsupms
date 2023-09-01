@@ -326,7 +326,7 @@
                     {{-- Job-Order --}}
                     @if($empStat == "Job Order" || $empStat == "Part-time" || $empStat == "Part-time/JO")
                     <div class="form-group">
-                        <h4><strong>GSIS DEDUCTIONS</strong></h4>
+                        <h4><strong>BIR DEDUCTIONS</strong></h4>
                         <div class="form-row">
                             <div class="col-md-6">
                                 <label for="exampleInputName">TAX 1%</label>
@@ -339,7 +339,7 @@
                                     <input type="number" id="tax_one" name="tax_one" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right" readonly>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-5">
                                 <label for="exampleInputName">TAX 2%</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
@@ -347,7 +347,13 @@
                                             <i class="far fa-clipboard"></i>
                                         </span>
                                     </div>
-                                    <input type="number" id="tax_two" name="tax_two" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
+                                    <input type="number" id="tax_two" name="tax_two" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right" readonly>
+                                </div>
+                            </div>
+                            <div class="cold-md-1">
+                                <label for="exampleInputName"></label>
+                                <div class="input-group">
+                                    <input style="width: 38px; height: 38px; margin-top: 8px;" type="checkbox" id="twocheckbox" name="twocheckbox" class="form-control form-control-lg float-right" value="1">
                                 </div>
                             </div>
                     @endif

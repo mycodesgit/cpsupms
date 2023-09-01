@@ -267,20 +267,22 @@ class ImportController extends Controller
                 ]);
 
                 $data = [
-                    ['column' => 'Project', 'action' => 'Deduction', 'amount' => '0.00'],
-                    ['column' => 'Net_MPC', 'action' => 'Deduction', 'amount' => '0.00'],
-                    ['column' => 'Graduate', 'action' => 'Deduction', 'amount' => '0.00'],
-                    ['column' => 'Less_Absences', 'action' => 'Deduction', 'amount' => '0.00'],
-                    ['column' => 'Less_Late', 'action' => 'Deduction', 'amount' => '0.00'],
+                    ['column' => 'Column1', 'label' => 'Column1', 'action' => 'Additionals', 'amount' => '0.00'],
+                    ['column' => 'Column2', 'label' => 'Column2', 'action' => 'Additionals', 'amount' => '0.00'],
+                    ['column' => 'Column3', 'label' => 'Column3', 'action' => 'Additionals', 'amount' => '0.00'],
+                    ['column' => 'Column4', 'label' => 'Column4', 'action' => 'Additionals', 'amount' => '0.00'],
+                    ['column' => 'Column5', 'label' => 'Column5', 'action' => 'Additionals', 'amount' => '0.00'],
                 ];
             }
             
             foreach ($data as $item) {
+                $label = isset($item['label']) ? $item['label'] : null;
                 Modify::create([
                     'pay_id' => $pay_id,
                     'payroll_id' => $payrollID,
                     'off_id' => $empOff,
                     'column' => $item['column'],
+                    'label'  => $label,
                     'action' => $item['action'],
                     'amount' => $item['amount'],
                 ]);

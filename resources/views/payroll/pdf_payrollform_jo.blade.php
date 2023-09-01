@@ -81,24 +81,11 @@
           <div class="col">
             <div class="table-responsive">
               @foreach($chunkedDatas as $chunk)
-              @php
-                $firstHalfformated = preg_replace('/(January|February|March|April|May|June|July|August|September|October|November|December)/', '', $firstHalf);
-                $dateParts = explode('-', $firstHalfformated);
-                $day = (int)$dateParts[0];
-                $pid = 1;
-                if($day >= 16){
-                    $pid = 2;
-                }
-
-                list($month, $day_range, $year) = explode(" ", $firstHalf);
-                list($start_day, $end_day) = explode("-", $day_range);
-                $add = "$month 1-15, $year";
-                @endphp
                 @php
                 $modifyth = array_fill_keys(['Column1', 'Column2', 'Column3', 'Column4', 'Column5'], 0);
                 @endphp
 
-                @foreach ($modifyjoth as $mody)
+                @foreach ($modify1 as $mody)
                 @if ($mody->action == 'Additionals' && array_key_exists($mody->column, $modifyth))
                     @php
                         $modifyth[$mody->column] += $mody->amount;
@@ -134,12 +121,15 @@
                     
                     @foreach ($columns_jo as $column => $total)
                         @if ($total != 0.00)
-                            @foreach ($modify1 as $mody)
-                                @if ($mody->column === $column)
-                                    <th>{{ $mody->label }}</th>
-                                    @break
-                                @endif
-                            @endforeach
+                        @foreach ($modify1 as $mody)
+                            @if ($mody->column === $column)
+                                @php
+                                    $label = preg_replace('/(January|February|March|April|May|June|July|August|September|October|November|December)/', '$1<br>', $mody->label);
+                                @endphp
+                                <th>{!! $label !!}</th>
+                                @break
+                            @endif
+                        @endforeach
                         @endif
                     @endforeach                   
                     <th>Deduction <br>Absent</th>
@@ -150,7 +140,7 @@
                     <th>NSCA MPC</th>
                     <th>Graduate <br> School</th>
                     <th>Project</th>
-                    <th>Total Deductions</th>
+                    <th>Total<br>Deductions</th>
                     <th>Net<br>Ammount<br>Received</th>
                     <th>Signature</th>
                 </tr>
@@ -220,7 +210,7 @@
 
                     @endphp
                     <tr>
-                      <td>{{ $no++ }}</td>
+                      <td style="text-align: center">{{ $no++ }}</td>
                       <td>{{ $data->lname }} {{ $data->fname }}</td>
                       <td>{{ $data->emp_pos }}</td>
                       <td>{{ number_format($grossincome, 2) }}</td>
@@ -276,26 +266,28 @@
                 <tfoot>
                   <tr>
                     <td colspan="3"></td>
-                    <td>{{ number_format($totalgrossincome,2) }}</td>
+                    <td><strong>{{ number_format($totalgrossincome,2) }}</strong></td>
                     @php $modcoltotalrow = 0; @endphp
+                    @if(isset($modcoltotal))
                     @foreach ($columns_jo as $column => $totalAmount)
                         @if (array_key_exists($column, $modcoltotal) && $modcoltotal[$column] > 0)
-                            <td>{{ number_format($modcoltotal[$column], 2) }}</td>
+                            <td><strong>{{ number_format($modcoltotal[$column], 2) }}</strong></td>
                             @php
                                 $modcoltotalrow += $modcoltotal[$column];
                             @endphp
                         @endif
                     @endforeach
-                    <td>{{ number_format($totalabsences,2) }}</td>
-                    <td>{{ number_format($totallate,2) }}</td>
-                    <td>{{ number_format(($totalearnperiod + $modcoltotalrow) - ($totallate + $totalabsences),2)}}</td>
-                    <td>{{ number_format($totaltax1,2)}}</td>
-                    <td>{{ number_format($totaltax2,2) }}</td>
-                    <td>{{ number_format($totalnsca_mpc,2) }}</td>
-                    <td>{{ number_format($totalgrad_guarantor,2) }}</td>
-                    <td>{{ number_format($totalprojects,2) }}</td>
-                    <td>{{ number_format($totalalldeduction,2) }}</td>
-                    <td>{{ number_format(($totalearnperiod + $modcoltotalrow) - ($totallate + $totalabsences) - $totalalldeduction,2) }}</td>
+                    @endif
+                    <td><strong>{{ number_format($totalabsences,2) }}</strong></td>
+                    <td><strong>{{ number_format($totallate,2) }}</strong></td>
+                    <td><strong>{{ number_format(($totalearnperiod + $modcoltotalrow) - ($totallate + $totalabsences),2)}}</strong></td>
+                    <td><strong>{{ number_format($totaltax1,2)}}</strong></td>
+                    <td><strong>{{ number_format($totaltax2,2) }}</strong></td>
+                    <td><strong>{{ number_format($totalnsca_mpc,2) }}</strong></td>
+                    <td><strong>{{ number_format($totalgrad_guarantor,2) }}</strong></td>
+                    <td><strong>{{ number_format($totalprojects,2) }}</strong></td>
+                    <td><strong>{{ number_format($totalalldeduction,2) }}</strong></td>
+                    <td><strong>{{ number_format(($totalearnperiod + $modcoltotalrow) - ($totallate + $totalabsences) - $totalalldeduction,2) }}</strong></td>
                     <td></td>  
                   </tr>  
                 </tfoot>         
@@ -305,7 +297,7 @@
                 <tbody class="last-page">
                   <tr>
                     <td colspan="7"></td>
-                    <td colspan="2" style="text-align: center;">RECAPITULATION</td>
+                    <td colspan="1" style="text-align: center;">RECAPITULATION</td>
                     <td style="text-align: center;">Debit</td>
                     <td style="text-align: center;">Credit</td>
                     <td colspan="6"></td>
@@ -328,19 +320,28 @@
                     <td>
                       <div style="width:100%; text-align: left; float: right;">
                         @foreach($code as $c)
-                        @if($c->status == "on") {{ $c->code_name }} @endif<br>
+                        @if($c->status == "on") {{ $c->code}} {{ $c->code_name }} @endif<br>
                         @endforeach
+                        <strong style="float: right;">TOTAL :</strong>
                       </div>
                     </td>
-                    <td>
-                      <div style="width:100%; text-align: left; float: left;">
-                        @foreach($code as $c)
-                          @if($c->status == "on") {{ $c->code}} @endif<br>
-                        @endforeach
-                      </div>
-                    </td>     
-                    <td></td>
-                    <td></td>
+                      <td>
+                        <div style="width:100%; text-align: left; float: left;">
+                          {{ number_format(($totalearnperiod + $modcoltotalrow) - ($totallate + $totalabsences),2)}}<br><br><br><br><br><br><br><br><br>
+                          <strong>{{ number_format(($totalearnperiod + $modcoltotalrow) - ($totallate + $totalabsences),2)}}</strong>
+                        </div>
+                      </td>
+                      <td>
+                        <div style="width:100%; text-align: left; float: left;">
+                          <br><br>
+                          {{ number_format($totaltax1,2)}}<br>
+                          {{ number_format($totaltax2,2) }}<br><br>
+                          {{ number_format($totalnsca_mpc,2) }}<br>
+                          {{ number_format($totalgrad_guarantor,2) }}<br>
+                          {{ number_format($totalprojects,2) }}<br><br>
+                          <strong>{{ number_format($totalalldeduction,2) }}</strong>
+                        </div>
+                      </td>
                     <td colspan="6">
                       <div>Approved for Payment:</div><br><br><br><br>
                       <div class="div-signature" style="width: 100%;">ALADINO C. MORACA, Ph.D.</div>

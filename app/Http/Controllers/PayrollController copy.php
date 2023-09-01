@@ -94,7 +94,7 @@ class PayrollController extends Controller
                     ['code_for' => 'Regular', 'code_name' => 'Due to Officers & Employee', 'code' => '', 'status' => ''],
                     ['code_for' => 'Regular', 'code_name' => 'Due to Officers & Employee', 'code' => '', 'status' => ''],
                 ];
-                
+            
                 foreach ($codes as $code) {
                     $code['payroll_id'] = $payrollID;
                     DB::table('codes')->insert($code);
@@ -138,14 +138,13 @@ class PayrollController extends Controller
             if ($request->input('statName') == 4) {
                 $codes = [
                     ['code_for' => 'Job Order', 'code_name' => 'Labor and Wages', 'code' => '50216010 01'],
-                    ['code_for' => 'Job Order', 'code_name' => 'Other Payable (NSCA Coop)', 'code' => '29999990 00'],
-                    ['code_for' => 'Job Order', 'code_name' => 'Due to BIR (1%)', 'code' => '20201010 00'],
-                    ['code_for' => 'Job Order', 'code_name' => 'Due to BIR (2%)', 'code' => '20201010 00'],
-                    ['code_for' => 'Job Order', 'code_name' => 'Other Receivable', 'code' => '10305990 00'],
+                    ['code_for' => 'Job Order', 'code_name' => 'Other Payable', 'code' => '29999990 00'],
+                    ['code_for' => 'Job Order', 'code_name' => 'Other Payable(Projects)', 'code' => '29999990 00'],
+                    ['code_for' => 'Job Order', 'code_name' => 'Due to BIR', 'code' => '20201010 00'],
                     ['code_for' => 'Job Order', 'code_name' => 'Other Payable(NSCA MPC)', 'code' => '29999990 00'],
+                    ['code_for' => 'Job Order', 'code_name' => 'Other Receivable', 'code' => '10305990 00'],
                     ['code_for' => 'Job Order', 'code_name' => 'Other Payable(Grad Sch.)', 'code' => '29999990 00'],
-                    ['code_for' => 'Job Order', 'code_name' => 'Other Payable(Project)', 'code' => '29999990 00'],
-                    ['code_for' => 'Job Order', 'code_name' => 'Cash in Bank-LC, LBP', 'code' => '10102020 24'],
+                    ['code_for' => 'Job Order', 'code_name' => 'Cash MDS, Regular', 'code' => '10104040 00'],
                 ];
             
                 foreach ($codes as $code) {
@@ -211,8 +210,7 @@ class PayrollController extends Controller
     public function storepayroll($payrollID, $statID, $offID){
         $payroll = Payroll::find($payrollID);
         $office = Office::all()->where('office_name', '!=', 'UNKNOWN');
-        $PayrollFile = PayrollFile::where('payroll_ID', $payroll->id)->first();    
-        $codes = Code::where('payroll_id', $payrollID)->get();
+        $PayrollFile = PayrollFile::where('payroll_ID', $payroll->id)->first();
         
         if($offID == "All"){
             $finalCond = 'o.id != ' . 0; 
@@ -231,10 +229,6 @@ class PayrollController extends Controller
         ->get();
 
         if($PayrollFile){
-            $modify1 = Modify::where('pay_id', $payroll->id)
-            ->join('offices as of', 'modifies.off_id', '=', 'of.id')
-            ->get();
-
             $modifyRef = Modify::where('pay_id', $payrollID)
             ->join('offices AS o', 'modifies.off_id', '=', 'o.id')
             ->where('action', 'Refund')
@@ -258,7 +252,6 @@ class PayrollController extends Controller
             });
 
         }else{
-            $modify1 = null;
             $modifyRef = null;
             $modifyDed = null;
         }
@@ -304,40 +297,45 @@ class PayrollController extends Controller
             $start = new \DateTime($startDate);
             $end = new \DateTime($endDate);
 
-            $startFormatted = $start->format('F j');
-            $endFormatted = $end->format('j, Y');
-
-            if ($start->format('F Y') === $end->format('F Y')) {
-                $daterange = $startFormatted . '-' . $endFormatted;
-            } else {
-                $daterange = $startFormatted . ' - ' . $endFormatted;
-            }
-
             $middle = (clone $start)->setDate($start->format('Y'), $start->format('m'), 15);
 
             $month = $start->format('F');
             $firstHalf = $month.' '.$start->format('j') .'-'. $middle->format('j, Y');
             $secondHalf = $middle->modify('+1 day')->format('F j') .'-'. $end->format('j, Y');
 
-            $statID == 1 ? $page = "storepayroll" : $page = "storepayroll_jo";
+            $codes = Code::where('payroll_id', $payrollID)->get();
+
+            if($statID == 1){
+                $page = "storepayroll";
+            }
+            if($statID == 4){
+                $page = "storepayroll_jo";
+            }
                  
             if(auth()->user()->role == "Administrator" || auth()->user()->role == "Payroll Administrator"){
                 $status = Status::all();
                 $camp = Campus::all();
+                if($PayrollFile){
+                    return view('payroll.'.$page, compact('camp', 'office', 'offID', 'status', 'currentcamp', 'empStat', 'pfiles', 'campId', 'statID', 'payrollID', 'employee', 'codes', 'days', 'firstHalf', 'secondHalf', 'deduction', 'modifyRef', 'modifyDed'));
+                }
+                else{
+                    return view('payroll.'.$page, compact('camp', 'office', 'offID', 'status', 'currentcamp', 'empStat', 'pfiles', 'campId', 'statID', 'payrollID', 'employee', 'codes', 'days', 'firstHalf', 'secondHalf', 'modifyRef', 'modifyDed'));
+                }
             }
             else{
                 if(auth()->user()->campus_id != $campId){
                     return redirect()->route('dashboard')->with('error1', 'You do not have permission to access this page');
-                }    
-                $status = Status::where('status_name', '!=', 'Regular')->get();
-                $camp = Campus::find(auth()->user()->campus_id)->get();
-            }
-
-            if($PayrollFile){
-                return view('payroll.'.$page, compact('camp', 'office', 'offID', 'status', 'currentcamp', 'empStat', 'pfiles', 'campId', 'statID', 'payrollID', 'employee', 'codes', 'days', 'firstHalf', 'secondHalf', 'daterange', 'deduction', 'modify1', 'modifyRef', 'modifyDed'));
-            }
-            else{
-                return view('payroll.'.$page, compact('camp', 'office', 'offID', 'status', 'currentcamp', 'empStat', 'pfiles', 'campId', 'statID', 'payrollID', 'employee', 'codes', 'days', 'firstHalf', 'secondHalf', 'daterange', 'modify1', 'modifyRef', 'modifyDed'));
+                }
+                else{
+                    $status = Status::where('status_name', '!=', 'Regular')->get();
+                    $camp = Campus::find(auth()->user()->campus_id)->get();
+                    if($PayrollFile){
+                        return view('payroll.'.$page, compact('camp', 'office', 'offID', 'status', 'currentcamp', 'empStat', 'pfiles', 'campId', 'statID', 'payrollID', 'employee', 'codes', 'days', 'firstHalf', 'secondHalf', 'modifyRef', 'modifyDed'));
+                    }
+                    else{
+                        return view('payroll.'.$page, compact('camp', 'office', 'offID', 'status', 'currentcamp', 'empStat', 'pfiles', 'campId', 'statID', 'payrollID', 'employee', 'codes', 'days', 'firstHalf', 'secondHalf', 'modifyRef', 'modifyDed'));
+                    }
+                }
             }
         // } catch (\Exception $e) {
         //     return redirect()->back()->with('error', 'An error occurred: ' . 'You do not have permission to access this page'); 
@@ -451,6 +449,14 @@ class PayrollController extends Controller
         $totalded1 += $modifyded1->sum('amount');
 
         // JO
+        
+        $modifyjoth = Modify::where('pay_id', $payroll->id)
+        ->join('offices as of', 'modifies.off_id', '=', 'of.id')
+        ->where('action', 'Additionals')
+        ->get();
+
+        $totalmodifyjoth = 0;
+        $totalmodifyjoth += $modifyjoth->sum('amount');
 
         $campID = $payroll->campus_id;
         $dateStart = $payroll->payroll_dateStart;
@@ -524,7 +530,7 @@ class PayrollController extends Controller
         }
         if($statID == 4){
             $viewTemplate = 'payroll.pdf_payrollform_jo';
-            $pdf = \PDF::loadView($viewTemplate, compact('chunkedDatas', 'chunkedDatas1', 'firstHalf', 'secondHalf', 'code', 'modify1', 'pid', 'offid'))->setPaper($customPaper, 'landscape');
+            $pdf = \PDF::loadView($viewTemplate, compact('chunkedDatas', 'chunkedDatas1', 'firstHalf', 'secondHalf', 'code', 'modify1', 'modifyjoth', 'pid', 'offid'))->setPaper($customPaper, 'landscape');
         }
         
         $pdf->setCallbacks([

@@ -52,13 +52,20 @@ th{
                                     <i class="fas fa-plus"></i> Code
                                 </button>
                                 <div class="btn-group">
-                                    <button id="open-pdf" target="_blank"  class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown">
-                                        <i class="fas fa-print"></i> Print Payroll
-                                    </button>
-                                    <div class="dropdown-menu" x-out-of-boundaries="" style="">
-                                        <a href="{{ route("pdf", ['payrollID' => $payrollID, 'statID' => $statID, 'pid' => 1, 'offid' => $offID]) }}" target="_blank" class="dropdown-item">{{ $firstHalf }}</a>
-                                        <a href="{{ route("pdf", ['payrollID' => $payrollID, 'statID' => $statID, 'pid' => 2, 'offid' => $offID]) }}" target="_blank" class="dropdown-item">{{ $secondHalf }}</a>
-                                    </div>
+                                    @php
+                                        $firstHalfformated = preg_replace('/(January|February|March|April|May|June|July|August|September|October|November|December)/', '', $daterange);
+                                        $dateParts = explode('-', $firstHalfformated);
+                                        $day = (int)$dateParts[0];
+                                        $pid = 1;
+                                        if($day >= 16){
+                                            $pid = 2;
+                                        }
+                                    @endphp
+                                    <a href="{{ route("pdf", ['payrollID' => $payrollID, 'statID' => $statID, 'pid' => $pid, 'offid' => $offID]) }}" target="_blank">
+                                        <button id="open-pdf" target="_blank"  class="btn btn-info btn-sm">
+                                            <i class="fas fa-print"></i> Print Payroll
+                                        </button>
+                                    </a>
                                 </div>
                             </h3>
                         </div>
@@ -72,7 +79,7 @@ th{
                                     @endphp
                                     <li class="breadcrumb-item"><a href="{{ route('viewPayroll', $encryptedId) }}">{{ $c->campus_abbr }}</a></li>
                                 @endforeach
-                                <li class="breadcrumb-item active">{{ $empStat }} Payroll</li>
+                                <li class="breadcrumb-item active">{{ $empStat }} Payroll - {{ $daterange }}</li>
                             </ol>                            
                         </div>
                     </div>
@@ -96,6 +103,20 @@ th{
                             </div>      
                         </div>                                        
                         
+                        @php
+                        $modifyth = array_fill_keys(['Column1', 'Column2', 'Column3', 'Column4', 'Column5'], 0);
+                        @endphp
+                        @if(isset($modify1))
+                            @foreach ($modify1 as $mody)
+                            @if ($mody->action == 'Additionals' && array_key_exists($mody->column, $modifyth))
+                                @php
+                                    $modifyth[$mody->column] += $mody->amount;
+                                    $modifyth[$mody->column] = ($modifyth[$mody->column] >= 1) ? 1 : 0;
+                                @endphp
+                            @endif
+                            @endforeach
+                        @endif
+                        
                         <div class="col-12">
                             <div class="table-responsive" style="overflow-y: auto;
                                 overflow-x: auto; ">
@@ -110,406 +131,318 @@ th{
                                                 <th>Designation</th>
                                                 <th>Gross Income</th>
                                                 @php
-                                                    $firstHalfformated = preg_replace('/(January|February|March|April|May|June|July|August|September|October|November|December)/', 'Add ', $firstHalf);
+                                                $columns_jo = ['Column1' => 0, 'Column2' => 0, 'Column3' => 0, 'Column4' => 0, 'Column5' => 0];
                                                 @endphp
-                                                <th>{{ $firstHalfformated }}</th>
-                                                <th>Absent</th>
-                                                <th>Late</th>
+                                                @if(isset($modify1))
+                                                    @foreach ($modify1 as $mody)
+                                                        @if ($mody->action === 'Additionals' && array_key_exists($mody->column, $columns_jo))
+                                                            @php
+                                                                $columns_jo[$mody->column] += $mody->amount;
+                                                            @endphp
+                                                        @endif
+                                                    @endforeach
+                                                @endif
+                                                @foreach ($columns_jo as $column => $total)
+                                                    @if ($total != 0.00)
+                                                    @foreach ($modify1 as $mody)
+                                                        @if ($mody->column === $column)
+                                                            @php
+                                                                $label = preg_replace('/(January|February|March|April|May|June|July|August|September|October|November|December)/', '$1<br>', $mody->label);
+                                                            @endphp
+                                                            <th style="text-align: center">{!! $label !!}</th>
+                                                            @break
+                                                        @endif
+                                                    @endforeach
+                                                    @endif
+                                                @endforeach             
+                                                <th style="text-align: center">Deduction<br>Absent</th>
+                                                <th style="text-align: center">Deduction<br>Late</th>
                                                 <th>Earn for period</th>
                                                 <th>Total Ded.</th>
                                                 <th>Net amount</th>
-                                                <th width="13%">Action</th>
+                                                <th width="7%">Action</th>
                                             </tr>
                                     </thead>
                                     <tbody>
-                                        @php 
-                                            $no = 1;
+                                        @php
+                                        $no = 1;
+                                        $totalgrossincome = 0;
+                                        $totalalldeduction = 0;
+                                        $totalgrossincome1st = 0;
+                                        $totalabsences = 0;
+                                        $totallate = 0;
+                                        $totaltax1 = 0;
+                                        $totaltax2 = 0;
+                                        $totalnsca_mpc = 0;
+                                        $totalprojects = 0;
+                                        $totalgrad_guarantor = 0;
+                                        $totalearnperiod = 0;
                                         @endphp
-                                        @foreach ($pfiles as $p)
-                                            @php 
-                                                $absent = $p->add_less_abs;
-                                                $late = $p->less_late;
-                                                
-                                                $total_deduct = floatval(sprintf("%.2f", $p->projects + $p->nsca_mpc + $p->grad_guarantor + $p->tax1 + $p->tax2, 2));
-
-                                                $saltype = $p->sal_type;
-                                                $salaryhalf = round(($p->salary_rate / 2), 2);
-                                                if($saltype == 1){
-                                                    $salfirsthalf = 0.00;
-                                                }
-                                                else{
-                                                    $salfirsthalf = round(($p->salary_rate / 2), 2);
-                                                }
-
-                                                $Rrate_per_day = ($p->salary_rate / 2) / $days;
-                                                $Rrate_per_hour = $Rrate_per_day / 8;
-                                                
-                                                $Jrate_per_hour = ($p->salary_rate / 2) / 8;
-
-                                                $GrossIncome = ($p->salary_rate / 2) - $absent - $late;
-                                                
-                                                $earn = round($GrossIncome + $salfirsthalf - $total_deduct, 2);
-                                                $decimalPoint = ($earn * 100) % 100;
-                                                $earns = ($GrossIncome + $salfirsthalf - $total_deduct);
-                                             
-                                                if ($saltype == 1) {
-                                                    if ($decimalPoint % 2 === 0) {
-                                                    $earns = round($earns, 2);
-                                                    
-                                                    } else {
-                                                        $earns = round($earns, 3);
-                                                        $earns = floor($earns * 100) / 100;
-                                                    }
-                                                    $sechalearn = $earns;
-                                                    $sechalearn1 = ($GrossIncome + $salfirsthalf  - $total_deduct);
-                                                } else {
-                                                    $sechalearn = $GrossIncome + $salfirsthalf;
-                                                    $sechalearn1 = $GrossIncome + $salfirsthalf   - $total_deduct;
-                                                }
-
+                                      
+                                        @foreach ($pfiles as $data)
+                                          @php
+                                          $saltype = $data->sal_type;
+                      
+                                          $absent = $data->add_less_abs;
+                                          $late = $data->less_late;
+                                          $tax1 = $data->tax1;
+                                          $tax2 = $data->tax2;
+                                          $nsca_mpc = $data->nsca_mpc; 
+                                          $grad_guarantor = $data->grad_guarantor;
+                                          $projects = $data->projects;
+                      
+                                          $grossincome = $data->salary_rate / 2;
+                                          
+                                          $totaldeduction = $projects + $nsca_mpc + $grad_guarantor + $tax1 + $tax2;
+                                          $earnperiod = $grossincome;
+                                          $netamountrec = ($earnperiod) - $totaldeduction;
+                      
+                                          $totalgrossincome += $grossincome;
+                                          $totalalldeduction += $totaldeduction;
+                                          $totalabsences += $absent;
+                                          $totallate += $late;
+                                          $totalearnperiod += $earnperiod; 
+                                          $totaltax1 += $tax1;
+                                          $totaltax2 += $tax2;
+                                          $totalnsca_mpc += $nsca_mpc;
+                                          $totalprojects += $projects;
+                                          $totalgrad_guarantor += $grad_guarantor;
+                      
+                      
+                      
+                                          $rowEarnSum = 0;
+                      
+                                          $rowEarns = round(($grossincome) - $totaldeduction, 2);
+                                          $decimalPoint = ($rowEarns * 100) % 100;
+                                          
+                                          $rowEarn = $rowEarns;
+                                        
+                                          $rowEarn = isset($rowEarn) ? $rowEarn : null;
+                      
+                                          $rowEarnsArray[] = $rowEarn === null ? '0.00' : $rowEarn;
+                      
+                                          $rowEarnSum = array_sum($rowEarnsArray);
+                                          
+                                          $halftotal = round($rowEarnSum, 2);
+                                          
+                      
+                                          @endphp
+                                          <tr>
+                                            <td style="text-align: center">{{ $no++ }}</td>
+                                            <td>{{ $data->emp_id }}</td>
+                                            <td>{{ $data->lname }} {{ $data->fname }} {{ $data->mname }}</td>
+                                            <td>{{ $data->office_abbr }}</td>
+                                            <td>{{ $data->emp_pos }}</td>
+                                            <td>{{ number_format($grossincome, 2) }}</td>
+                                            @php
+                                              $totaljoAdd = 0; 
                                             @endphp
-                                            <tr id="tr-data" class="tr-data tr-{{ $p->pid }}">
-                                                <td>{{ $no++ }}</td>
-                                                <td>{{ $p->emp_id }}</td>
-                                                <td>{{ $p->lname }} {{ $p->fname }} {{ $p->mname }}</td>
-                                                <td>{{ $p->office_abbr }}</td>
-                                                <td>{{ $p->position }}</td>
-                                                <td>{{ number_format(($p->salary_rate / 2), 2) }}</td>
-                                                <td class="text-danger">{{ $saltype == 1 ? number_format(0, 2) : number_format(($p->salary_rate / 2), 2) }}</td>
-                                                <td class="text-danger">{{ number_format($p->add_less_abs, 2) }}</td>
-                                                <td class="text-danger">{{ number_format($p->less_late, 2) }}</td>
-                                                <td id="deduct-{{ $p->pid }}">{{ number_format($GrossIncome + $salfirsthalf, 2); }}</td>
-                                                <td id="net-{{ $p->pid }}" class="text-danger">{{ number_format($total_deduct, 2) }}</td>
-                                                <td class="firstHalf @if($sechalearn1 <= 3000)text-danger @endif">{{ number_format($sechalearn1, 2) }}</td>
-                                                {{-- <td class="secondtHalf @if($earns + $p->sumRef - $p->sumDed <= 3000)text-danger @endif">{{ $saltype == 3 || $saltype == 1 ? number_format($sechalearn, 2) : '0.00' }}</td> --}}
-                                              
-                                                <td>
-                                                    <div class="btn-group">
-                                                        <button type="button" style="height:32px;" class="btn btn-{{ $p->sal_type == 1 ? 'secondary' : ''}}{{ $p->sal_type == 2 ? 'primary' : ''}}{{ $p->sal_type == 3 ? 'success' : ''}} dropdown-toggle" data-toggle="dropdown" aria-expanded="false" title="deductions">
-                                                        {{ $p->sal_type }}
-                                                        </button>
-                                                        <div class="dropdown-menu" x-out-of-boundaries="" style="">
-                                                            <a href="{{ route('saltypepUp', ['id' => $p->pid, 'val' => '1']) }}" class="dropdown-item">1.) half</a>
-                                                            <a href="{{ route('saltypepUp', ['id' => $p->pid, 'val' => '2']) }}" class="dropdown-item">2.) Add {{ $firstHalf }}</a>
-                                                        </div>                                                        
-                                                    </div>
-                                                    <div class="btn-group">
-                                                        <button type="button" style="height:32px;" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-expanded="false" title="deductions">
-                                                        </button>
-                                                        <div class="dropdown-menu" x-out-of-boundaries="" style="">
-                                                        <button id="{{ $p->pid }}" value="1" data-date="{{ $firstHalf }}" data-modes="3" class="dropdown-item deductions">Deduction {{ $firstHalf }}</button>
-                                                        <button id="{{ $p->pid }}" value="2" data-date="{{ $secondHalf }}" data-modes="4" class="dropdown-item deductions">Adjustments {{ $secondHalf }}</button>
-                                                        </div>
-                                                    </div>
-                                                    <button value="{{ $p->pid }}" type='button' class='btn btn-danger btn-sm deletePayrollFiles'>
-                                                        <i class='fas fa-trash'></i>
+                                            
+                                            @foreach ($modify1 as $mody)
+                                                @if ($mody->pay_id == $data->payroll_ID && $mody->action == 'Additionals' && array_key_exists($mody->column, $columns_jo))
+                                                    @php
+                                                        $columns_jo[$mody->column] += $mody->amount;
+                                                    @endphp
+                                                @endif
+                                            @endforeach
+                                            
+                                            @foreach ($modify1 as $mody)
+                                                @if ($mody->action == 'Additionals' && array_key_exists($mody->column, $columns_jo))
+                                                    @php
+                                                        $columns_jo[$mody->column] += $mody->amount;
+                                                    @endphp
+                                                @endif
+                                            @endforeach
+                                            @foreach ($modify1 as $mody)
+                                                @if ($mody->payroll_id == $data->pid && array_key_exists($mody->column, $columns_jo))
+                                                    @php
+                                                        $modjoTotalAmount = $columns_jo[$mody->column];
+                                                    @endphp
+                                                    @if ($modjoTotalAmount != 0.00)
+                                                        <td>{{ $mody->action === 'Additionals' ? number_format($mody->amount, 2) : '0.00' }}</td>
+                                                        @if ($mody->action === 'Additionals')
+                                                            @php
+                                                                $totaljoAdd += $mody->amount;
+                                                                $modcoltotal[$mody->column] = isset($modcoltotal[$mody->column]) ? $modcoltotal[$mody->column] + $mody->amount : $mody->amount;
+                                                            @endphp
+                                                        @endif
+                                                    @endif
+                                                @endif
+                                            @endforeach
+                                            <td>{{ number_format($data->add_less_abs, 2) }}</td>
+                                            <td>{{ number_format($data->less_late, 2) }}</td>
+                                            <td>{{ number_format(($earnperiod + $totaljoAdd) - ($absent + $late), 2) }}</td>
+                                            <td>{{ number_format($totaldeduction, 2) }}</td>
+                                            <td>{{ number_format(($earnperiod + $totaljoAdd) - ($absent + $late) - $totaldeduction, 2) }}</td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button type="button" style="height:32px;" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-expanded="false" title="deductions">
                                                     </button>
-                                                </td>
+                                                    <div class="dropdown-menu" x-out-of-boundaries="" style="">
+                                                    <button id="{{ $data->pid }}" value="1" data-date="{{ $firstHalf }}" data-modes="3" class="dropdown-item deductions">Deduction</button>
+                                                    <button id="{{ $data->pid }}" value="2" data-date="{{ $secondHalf }}" data-modes="4" data-="jo" class="dropdown-item deductions">Additional</button>
+                                                    </div>
+                                                </div>
+                                                <button value="{{ $data->pid }}" type='button' class='btn btn-danger btn-sm deletePayrollFiles'>
+                                                    <i class='fas fa-trash'></i>
+                                                </button>
+                                            </td>
                                             </tr>
-                                        @endforeach
-                                    </tbody>
+                                        @endforeach 
+                                      </tbody>   
                                 </table>
                             </div>
                         </div>   
                         @foreach($pfiles as $p)
-                            @php
-                                $emltotal = 0;
+                        @php
+                            $emltotal = 0;
 
-                                $eml = $p->eml;
-                                $policy =$p->eml;
-                                $consol =$p->eml;
-                                $educ_ass =$p->eml;
-                                $loan =$p->eml;
-                                $rlip =$p->eml;
-                                $gfal =$p->eml;
-                                $computer =$p->eml;
+                            $eml = $p->eml;
+                            $policy =$p->eml;
+                            $consol =$p->eml;
+                            $educ_ass =$p->eml;
+                            $loan =$p->eml;
+                            $rlip =$p->eml;
+                            $gfal =$p->eml;
+                            $computer =$p->eml;
 
-                                $emltotal += $eml;
-                            @endphp
+                            $emltotal += $eml;
+                        @endphp
+                    @endforeach
+                    @if(isset($deduction))
+                    <div class="col-10 mt-3">
+                        <table class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th colspan="2" class="text-center">LATE / ABSENCES</th>
+                                    <th></th>
+                                    <th colspan="2" class="text-center">BIR DEDUCTION</th>
+                                    <th></th>
+                                    <th colspan="3" class="text-center">OTHER DEDUCTION</th>
+                                    <th></th>
+                                </tr>
+                                <tr>
+                                    <th>Absent</th>
+                                    <th>Late</th>
+                                    <th class="text-center">Total</th>
+                                    <th>TAX 1%</th>
+                                    <th>TAX 2%</th>
+                                    <th class="text-center">Total</th>
+                                    <th>NSCA MPC</th>
+                                    <th>Graduate</th>
+                                    <th>School Project</th>
+                                    <th class="text-center">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ number_format($totalabsences, 2) }}</td>
+                                    <td>{{ number_format($totallate, 2) }}</td>
+                                    <td class="text-red text-center" width="7%">{{ number_format($totalabsences + $totallate, 2) }}</td>
+                                    <td>{{ number_format($totaltax1, 2) }}</td>
+                                    <td>{{ number_format($totaltax2, 2) }}</td>
+                                    <td class="text-red text-center" width="7%">{{ number_format($totaltax1 + $totaltax2, 2) }}</td>
+                                    <td>{{ number_format($totalnsca_mpc, 2) }}</td>
+                                    <td>{{ number_format($totalprojects, 2) }}</td>
+                                    <td>{{ number_format($totalgrad_guarantor, 2) }}</td>
+                                    <td class="text-red text-center" width="7%">{{ number_format($totalnsca_mpc + $totalprojects + $totalgrad_guarantor, 2) }}</td>
+                                </tr>
+                            </tbody>
+                        </table><br>
+                        @php
+                            $columns_jo = ['Column1' => 0, 'Column2' => 0, 'Column3' => 0, 'Column4' => 0, 'Column5' => 0];
+                            $columns_jo1 = ['Column1', 'Column2', 'Column3', 'Column4', 'Column5'];
+                        @endphp
+                        
+                        @php 
+                        $totalmodjoTotalAmount = 0;  
+                        $no = 1;
+                        @endphp
+                        @foreach ($modify1 as $mody)
+                            @if ($mody->pay_id == $data->payroll_ID && $mody->action == 'Additionals' && array_key_exists($mody->column, $columns_jo))
+                                @php
+                                    $columns_jo[$mody->column] += $mody->amount;
+                                @endphp
+                            @endif
                         @endforeach
-                        @if(isset($deduction))
-                        <div class="col-10 mt-3">
-                            <table class="styled-table">
-                                <thead>
-                                    <tr>
-                                        <th colspan="8" class="text-center">DEDUCTION(GSIS)</th>
-                                        <th></th>
-                                        <th colspan="4" class="text-center">DEDUCTION(PAG-IBIG)</th>
-                                        <th></th>
-                                    </tr>
-                                    <tr>
-                                        <th>EML</th>
-                                        <th>POLICY</th>
-                                        <th>Consol</th>
-                                        <th>EDUC. ASST</th>
-                                        <th>loan</th>
-                                        <th>RLIP</th>
-                                        <th>GFAL</th>
-                                        <th>Computer</th>
-                                        <th class="text-center">Total</th>
-                                        <th>MPL</th>
-                                        <th>PREM.</th>
-                                        <th>Calaming Loan</th>
-                                        <th>MP2.</th>
-                                        <th class="text-center">Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @php
-                                        $eml = $deduction->sum('eml');
-                                        $pol_gfal = $deduction->sum('pol_gfal');
-                                        $consol = $deduction->sum('consol');
-                                        $ed_asst_mpl = $deduction->sum('ed_asst_mpl');
-                                        $loan = $deduction->sum('loan');
-                                        $rlip = $deduction->sum('rlip');
-                                        $gfal = $deduction->sum('gfal');
-                                        $computer = $deduction->sum('computer');
-
-                                        $totalGSIS = $eml + $pol_gfal + $consol + $ed_asst_mpl + $loan + $rlip + $gfal + $computer;
-
-                                        $mpl = $deduction->sum('mpl');
-                                        $prem = $deduction->sum('prem');
-                                        $calam_loan = $deduction->sum('calam_loan');
-                                        $mp2 = $deduction->sum('mp2');
-
-                                        $totalPagibig = $mpl + $prem + $calam_loan + $mp2;
-
-                                        $philhealth = $deduction->sum('philhealth');
-                                        $withtax = $deduction->sum('holding_tax');
-                                        $lbp = $deduction->sum('lbp');
-                                        $cauyan = $deduction->sum('cauyan');
-                                        $projects = $deduction->sum('projects');
-                                        $nsca_mpc = $deduction->sum('nsca_mpc');
-                                        $med_ded = $deduction->sum('med_deduction');
-                                        $grad_schll = $deduction->sum('grad_guarantor');
-                                        $cfi = $deduction->sum('cfi');
-                                        $csb = $deduction->sum('csb');
-                                        $fasfeed = $deduction->sum('fasfeed');
-                                        $diss_ance = $deduction->sum('dis_unliquidated');
-                                        $less_abs = $deduction->sum('add_less_abs');
-
-                                        $totalOtherDed = $philhealth + $withtax + $lbp + $cauyan + $projects + $nsca_mpc + $med_ded + $grad_schll + $cfi + $csb + $fasfeed + $diss_ance;
-
-                                        $add_sal_diff = $deduction->sum('add_sal_diff');
-                                        $add_nbc_diff = $deduction->sum('add_nbc_diff');
-                                        $add_step_incre = $deduction->sum('add_step_incre');     
-                                        
-                                        $totalAdd = $add_sal_diff + $add_nbc_diff + $add_step_incre;
-                                    @endphp
-                                    <tr>
-                                        <td>{{ number_format($eml, 2) }}</td>
-                                        <td>{{ number_format($pol_gfal, 2) }}</td>
-                                        <td>{{ number_format($consol, 2) }}</td>
-                                        <td>{{ number_format($ed_asst_mpl, 2) }}</td>
-                                        <td>{{ number_format($loan, 2) }}</td>
-                                        <td>{{ number_format($rlip, 2) }}</td>
-                                        <td>{{ number_format($gfal, 2) }}</td>
-                                        <td>{{ number_format($computer, 2) }}</td>
-                                        <td class="text-red text-center" width="7%">{{ number_format($totalGSIS, 2) }}</td>
-                                        <td>{{ number_format($mpl, 2) }}</td>
-                                        <td>{{ number_format($prem, 2) }}</td>
-                                        <td>{{ number_format($calam_loan, 2) }}</td>
-                                        <td>{{ number_format($mp2, 2) }}</td>
-                                        <td class="text-red text-center" width="7%">{{ number_format($totalPagibig, 2) }}</td>
-                                    </tr>
-                                </tbody>
-                            </table><br>
-                            <table class="styled-table">
-                                <thead>
-                                    <tr>
-                                        <th colspan="12" class="text-center">DEDUCTION(OTHER PAYABLES)</th>
-                                        <th></th>
-                                    </tr>
-                                    <tr>
-                                        <th>Philhealth</th>
-                                        <th>Withholding Tax</th>
-                                        <th>LBP</th>
-                                        <th>Cauyan</th>
-                                        <th>Projects</th>
-                                        <th>NSCA MPC</th>
-                                        <th>Medical Ded.</th>
-                                        <th>Grad SCH / Guar.</th>
-                                        <th>CFI</th>
-                                        <th>CSB</th>
-                                        <th>FASFEED</th>
-                                        <th>Disallow ANCE/UNIQ</th>
-                                        <th class="text-center">Total</th>
-                              
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>{{ number_format($philhealth , 2) }}</td>
-                                        <td>{{ number_format($withtax , 2) }}</td>
-                                        <td>{{ number_format($lbp , 2) }}</td>
-                                        <td>{{ number_format($cauyan , 2) }}</td>
-                                        <td>{{ number_format($projects , 2) }}</td>
-                                        <td>{{ number_format($nsca_mpc , 2) }}</td>
-                                        <td>{{ number_format($med_ded, 2) }}</td>
-                                        <td>{{ number_format($grad_schll , 2) }}</td>
-                                        <td>{{ number_format($cfi , 2) }}</td>
-                                        <td>{{ number_format($csb , 2) }}</td>
-                                        <td>{{ number_format($fasfeed , 2) }}</td>
-                                        <td>{{ number_format($diss_ance , 2) }}</td>
-                                        <td class="text-red text-center" width="7%">{{ number_format($totalOtherDed, 2) }}</td>
-                                    </tr>
-                                </tbody>
-                            </table><br>
-                            <table class="styled-table">
-                                <thead>
-                                    <tr>
-                                        <th colspan="3" class="text-center">Additionals</th>
-                                        <th class="text-center">Less</th>
-                                        <th></th>
-                                        <th colspan="16" class="text-center">Adjustments</th>
-                                    </tr>
-                                    <tr>
-                                        <th width="7%">SSL Sal Diff.</th>
-                                        <th width="7%">NBC Sal Diff</th>
-                                        <th width="7%">Step Increment</th>
-                                        <th width="7%">Less Abs incurr.</th>
-                                        <th class="text-center">Total</th>
-                                        <th colspan="2" class="text-center">Project</th>
-                                        <th colspan="2" class="text-center">Net MPC</th>
-                                        <th colspan="2" class="text-center">Graduate</th>
-                                        <th colspan="2" class="text-center">Philhealth</th>
-                                        <th colspan="2" class="text-center">Pag-ibig</th>
-                                        <th colspan="2" class="text-center">GSIS</th>
-                                        <th colspan="2" class="text-center">CSB</th>
-                                        <th colspan="2" class="text-center">Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>{{ number_format($add_sal_diff , 2) }}</td>
-                                        <td>{{ number_format($add_nbc_diff , 2) }}</td>
-                                        <td>{{ number_format($add_step_incre , 2) }}</td>
-                                        <td>{{ number_format($less_abs , 2) }}</td>
-                                        <td class="text-red text-center" width="7%">{{ number_format($totalAdd - $less_abs, 2) }}</td>
-                                        <th>Refund</th>
-                                        <th>Deduct</th>
-                                        <th>Refund</th>
-                                        <th>Deduct</th>
-                                        <th>Refund</th>
-                                        <th>Deduct</th>
-                                        <th>Refund</th>
-                                        <th>Deduct</th>
-                                        <th>Refund</th>
-                                        <th>Deduct</th>
-                                        <th>Refund</th>
-                                        <th>Deduct</th>
-                                        <th>Refund</th>
-                                        <th>Deduct</th>
-                                        <th>Refund</th>
-                                        <th>Deduct</th>
-                                    </tr>
-                                    @php
-                                        $modrefProject = 0;
-                                    @endphp
-                                    <tr>
-                                        <td colspan="5"></td>
-                                        <td class="totalRef">{{ number_format($modifyRef->get('Project', 0),2); }}</td>
-                                        <td class="totalDed">{{ number_format($modifyDed->get('Project', 0),2); }}</td>
-                                        <td class="totalRef">{{ number_format($modifyRef->get('Net_MPC', 0),2); }}</td>
-                                        <td class="totalDed">{{ number_format($modifyDed->get('Net_MPC', 0),2); }}</td>
-                                        <td class="totalRef">{{ number_format($modifyRef->get('Graduate', 0),2); }}</td>
-                                        <td class="totalDed">{{ number_format($modifyDed->get('Graduate', 0),2); }}</td>
-                                        <td class="totalRef">{{ number_format($modifyRef->get('Philhealth', 0),2); }}</td>
-                                        <td class="totalDed">{{ number_format($modifyDed->get('Philhealth', 0),2); }}</td>
-                                        <td class="totalRef">{{ number_format($modifyRef->get('Pag_ibig', 0),2); }}</td>
-                                        <td class="totalDed">{{ number_format($modifyDed->get('Pag_ibig', 0),2); }}</td>
-                                        <td class="totalRef">{{ number_format($modifyRef->get('Gsis', 0),2); }}</td>
-                                        <td class="totalDed">{{ number_format($modifyDed->get('Gsis', 0),2); }}</td>
-                                        <td class="totalRef">{{ number_format($modifyRef->get('Csb', 0),2); }}</td>
-                                        <td class="totalDed">{{ number_format($modifyDed->get('Csb', 0),2); }}</td>
-                                        <td id="totalRefundAll1" class="text-danger"></td>
-                                        <td id="totalDeductAll1" class="text-danger"></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="col-2 mt-3">
-                            <table class="styled-table">
-                                <thead>
-                                    <tr>
-                                        <th colspan="2" class="text-center">SUMMARRY (NET AMOUNT)</th>
-                                    </tr>
-                                    <tr>
-                                        <th>{{ $firstHalf }}</th>
-                                        <td class="text-center" id="firstHalfTotal"></td>
-                                    </tr>
-                                    <tr>
-                                        <th>{{ $secondHalf }}</th>
-                                        <td class="text-center" id="secondtHalfTotal"></td>
-                                    </tr>
-                                    <tr>
-                                        <th>TOTAL AMOUNT</th>
-                                        <td id="grandtotalnet" class="text-danger text-center"></td>
-                                    </tr>
-                                </thead>
-                            </table>
-                            <br>
-                            <table class="styled-table">
-                                <thead>
-                                    <tr>
-                                        <th colspan="2" class="text-center">SUMMARRY (DEDUCTION)</th>
-                                    </tr>
-                                    <tr>
-                                        <th>GSIS</th>
-                                        <td class="text-center">{{ number_format($totalGSIS, 2) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>PAG-IBIG</th>
-                                        <td class="text-center">{{ number_format($totalPagibig, 2) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>OTHER PAYABLES</th>
-                                        <td class="text-center">{{ number_format($totalOtherDed, 2) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>TOTAL AMOUNT</th>
-                                        <td class="text-red text-center">{{ number_format($totalGSIS + $totalOtherDed + $totalPagibig, 2) }}</td>
-                                    </tr>
-                                </thead>
-                            </table>
-                            <br>
-                            <table class="styled-table">
-                                <thead>
-                                    <tr>
-                                        <th colspan="2" class="text-center">SUMMARRY (ADDITIONALS)</th>
-                                    </tr>
-                                    <tr>
-                                        <th>ADDITIONALS</th>
-                                        <td class="text-center">{{ number_format($totalAdd, 2) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Less Abs incurr.</th>
-                                        <td class="text-center">{{ number_format($less_abs, 2) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>TOTAL AMOUNT</th>
-                                        <td class="text-red text-center">{{ number_format($totalAdd - $less_abs, 2) }}</td>
-                                    </tr>
-                                </thead>
-                            </table>
-                            <br>
-                            <table class="styled-table">
-                                <thead>
-                                    <tr>
-                                        <th colspan="2" class="text-center">SUMMARRY (ADJUSTMENTS)</th>
-                                    </tr>
-                                    <tr>
-                                        <th>REFUND</th>
-                                        <td id="totalRefundAll" class="text-red text-center"></td>
-                                    </tr>
-                                    <tr>
-                                        <th>DEDUCTION</th>
-                                        <td id="totalDeductAll" class="text-red text-center"></td>
-                                    </tr>
-                                </thead>
-                            </table>
-                        </div>
-                        @endif
+                        <table class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th colspan="5" class="text-center">ADDITIONAL</th>
+                                    <th></th>
+                                </tr>
+                                <tr>
+                                    @foreach ($modify1 as $mody)
+                                        @if ($mody->payroll_id == $data->pid && array_key_exists($mody->column, $columns_jo))
+                                            <td>{{ $mody->label }}</td>
+                                        @endif
+                                    @endforeach
+                                    <th class="text-center">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                @foreach ($modify1 as $mody)
+                                    @if ($mody->payroll_id == $data->pid && array_key_exists($mody->column, $columns_jo))
+                                        @php
+                                            $modjoTotalAmount = $columns_jo[$mody->column];
+                                            $totalmodjoTotalAmount += $modjoTotalAmount;
+                                        @endphp
+                                        <td>{{ number_format($modjoTotalAmount, 2) }}</td>
+                                    @endif
+                                @endforeach
+                                    <td style="text-align: center;" class="text-danger">{{ number_format($totalmodjoTotalAmount, 2) }}</td>
+                                </tr>
+                            </tbody>
+                        </table><br>
+                    </div>
+                    <div class="col-2 mt-3">
+                        <table class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th colspan="2" class="text-center">SUMMARRY</th>
+                                </tr>
+                                <tr>
+                                    <th>GROSS INCOME</th>
+                                    <td class="text-red text-center">{{ number_format($totalgrossincome,2) }}</td>
+                                </tr>
+                                <tr>
+                                    <th>ADDITONAL</th>
+                                    <td id="totalDeductAll" class="text-red text-center">{{ number_format($totalmodjoTotalAmount,2) }}</td>
+                                </tr>
+                                <tr>
+                                    <th>LATE / ABSENCES</th>
+                                    <td class="text-red text-center">{{ number_format($totalabsences + $totallate, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <th>TOTAL EARN FOR A PERIOD</th>
+                                    <td id="totalDeductAll" class="text-red text-center">{{ number_format(($totalgrossincome + $totalmodjoTotalAmount) - ($totalabsences + $totallate),2) }}</td>
+                                </tr>
+                            </thead>
+                        </table><br>
+                        <table class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th>BIR DEDUCTION</th>
+                                    <td class="text-red text-center">{{ number_format($totaltax1 + $totaltax2,2) }}</td>
+                                </tr>
+                                <tr>
+                                    <th>OTHER DEDUCTION</th>
+                                    <td class="text-red text-center">{{ number_format($totalnsca_mpc + $totalprojects + $totalgrad_guarantor, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <th>TOTAL DEDUCTION</th>
+                                    <td class="text-red text-center">{{ number_format($totaltax1 + $totaltax2 + $totalnsca_mpc + $totalprojects + $totalgrad_guarantor, 2) }}</td>
+                                </tr>
+                                <tr><td></td><td></td></tr>
+                                <tr>
+                                    <th>TOTAL NET AMOUNT</th>
+                                    <td class="text-red text-center">{{ number_format( ($totalgrossincome + $totalmodjoTotalAmount) - ($totalabsences + $totallate + $totalalldeduction), 2) }}</td>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                    @endif
                     </div>
                 </div>
             </div>

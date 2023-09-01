@@ -9,6 +9,7 @@ use App\Models\Deductiontwo;
 use App\Models\Campus;
 use App\Models\Status;
 use App\Models\Employee;
+use App\Models\Modify;
 
 class DeductionController extends Controller
 {
@@ -80,14 +81,29 @@ class DeductionController extends Controller
         if($tax2 <= 0){ 
             $tax2 = '0.00';
         }
+
         if($emp_statname == "Job Order" || $emp_statname == "Part-time"){
-            $con = $payroll->sal_type == 1 ? 2 : 1;
-            $half = round(($emp_salary - $request->add_less_abs - $request->less_late) / $con, 2);            
+
+            $modify = Modify::where('payroll_id', $id);
+            $totaladd = 0;
+            if(isset($modify)){
+                $totaladd = $modify->sum('amount');
+            }
+            $tax2 = $request->tax_two;
+            if($tax2 != 0.00 || $request->twocheckbox == 1){
+                $tax2 = round(($emp_salary / 2) + ($totaladd) - ($request->add_less_abs + $request->less_late), 2); 
+                $tax2 = floatval(sprintf("%.2f",$tax2 * 0.02));
+            }
+            if($tax2 != 0.00 && $request->twocheckbox != 1){
+                $tax2 = '0.00';
+            }
+
+            $half = round(($emp_salary / 2) + ($totaladd) - ($request->add_less_abs + $request->less_late), 2);            
             $tax1 = floatval(sprintf("%.2f",$half * 0.01));
 
             Deduction::where('payroll_id', $id)->update([
                 'tax1' => $tax1,
-                'tax2' => $request->tax_two,
+                'tax2' => $tax2,
                 'projects' => $request->projects,
                 'nsca_mpc' => $request->nsca_mpc,
                 'grad_guarantor' => $request->grad_guarantor,
