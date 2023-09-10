@@ -189,7 +189,7 @@ th{
                                                             <a href="{{ route('saltypepUp', ['id' => $p->pid, 'val' => '2']) }}" class="dropdown-item">2.) 1st half</a>
                                                             <a href="{{ route('saltypepUp', ['id' => $p->pid, 'val' => '3']) }}" class="dropdown-item">3.) 2nd half</a>
                                                         </div>                                                        
-                                                    </div>
+                                                    </div> 
                                                     <div class="btn-group">
                                                         <button type="button" style="height:32px;" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-expanded="false" title="deductions">
                                                         </button>

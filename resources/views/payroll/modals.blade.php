@@ -73,6 +73,27 @@
                         </div>
                     </div>
                     
+                    <div class="form-group" id="funding">
+                        <div class="form-row">
+                            <div class="col-md-12">
+                                <label for="exampleInputName">Funding:</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-info-circle"></i>
+                                        </span>
+                                    </div>
+                                    <select class="form-control" name="fund">
+                                        <option>Income</option>
+                                        <option>Yearbook</option>
+                                        <option>MDS</option>
+                                    </select>
+                                </div>
+                                <span style="color: #FF0000; font-size: 10pt;" class="form-text text-left statName_error"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="form-group">
                         <div class="form-row">
                             <div class="col-md-12">
@@ -658,8 +679,9 @@
                                     </div>
                                 </div>
                             @endif
+
                                 <div class="col-md-{{$empStat == "Regular" ? '4' : '6'}}">
-                                    <label for="exampleInputName">Less Absences</label>
+                                    <label for="exampleInputName">Less Absences 1st</label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">
@@ -669,6 +691,19 @@
                                         <input type="number" id="add_less_abs" name="add_less_abs" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
                                     </div>
                                 </div>
+
+                                <div class="col-md-{{$empStat == "Regular" ? '4' : '6'}}">
+                                    <label for="exampleInputName">Less Absences 2nd</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="far fa-clipboard"></i>
+                                            </span>
+                                        </div>
+                                        <input type="number" id="add_less_abs1" name="add_less_abs1" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
+                                    </div>
+                                </div>
+                                @if($empStat == "Job Order")
                                 <div class="col-md-{{$empStat == "Regular" ? '4' : '6'}}">
                                     <label for="exampleInputName">Less Late</label>
                                     <div class="input-group">
@@ -680,6 +715,7 @@
                                         <input type="number" id="less_late" name="less_late" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
                                     </div>
                                 </div>
+                                @endif
                         @if($empStat == "Regular")
                             </div>
                         </div>

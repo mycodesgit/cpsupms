@@ -212,6 +212,7 @@
                         $("#fasfeed").val(deductions[0].fasfeed);
                         $("#dis_unliquidated").val(deductions[0].dis_unliquidated);
                         $("#add_less_abs").val(deductions[0].add_less_abs);
+                        $("#add_less_abs1").val(deductions[0].add_less_abs1);
                         $("#less_late").val(deductions[0].less_late);
                         if(deductions[0].tax2 > 0){
                             $("#twocheckbox").prop("checked", true);
@@ -231,7 +232,7 @@
                     response.data.forEach(function(mody) {
 
                         var formElement = `
-                            <div class="col-md-4">
+                            <div class="col-md-{{ $curr_route == 'storepayroll-jo' ? 4 : 3 }}">
                                 <div class="input-group">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text">
@@ -242,6 +243,17 @@
                                     <input type="hidden" name="idd" id="idd" value="${mody.pay_id}">
                                     <input type="hidden" name="curr_route" id="curr_route" value="{{$curr_route}}">
                                     <input type="text" name="${mody.column}" step="any" min="0" value="${mody.column}" class="form-control float-right" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-{{ $curr_route == 'storepayroll-jo' ? 4 : 3 }}">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="far fa-clipboard"></i>
+                                        </span>
+                                    </div>
+                                    <input type="hidden" name="id" id="id" value="${mody.payroll_id}">
+                                    <input type="text" name="${mody.column}_label" value="${mody.label}" class="form-control float-right">
                                 </div>
                             </div>
                             @if($curr_route == "storepayroll")
@@ -258,20 +270,7 @@
                                 </div>                                
                             </div>
                             @endif
-                            @if($curr_route == "storepayroll-jo")
-                            <div class="col-md-4">
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">
-                                            <i class="far fa-clipboard"></i>
-                                        </span>
-                                    </div>
-                                    <input type="hidden" name="id" id="id" value="${mody.payroll_id}">
-                                    <input type="text" name="${mody.column}_label" value="${mody.label}" class="form-control float-right">
-                                </div>
-                            </div>
-                            @endif
-                            <div class="col-md-4">
+                            <div class="col-md-{{ $curr_route == 'storepayroll-jo' ? 4 : 2 }}">
                                 <div class="input-group">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text">
@@ -436,6 +435,7 @@
 <script>
     $(document).ready(function() {
         $('#J-work').hide();
+        $('#funding').hide();
     });
 
     function dayHours(val){
@@ -485,6 +485,12 @@
             document.getElementById('dateEnd').value = formatDate(lastDayOfMonth);
 
             calculateDays1(firstDayOfMonth, lastDayOfMonth);
+            if(val == 4){
+                $("#funding").show();
+            }
+            else{
+                $("#funding").hide();
+            }
         }
         else{
             document.getElementById('dateStart').value = "";

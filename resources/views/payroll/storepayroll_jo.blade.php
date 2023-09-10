@@ -227,7 +227,7 @@ th{
                                           
                       
                                           @endphp
-                                          <tr>
+                                          <tr class="tr-data tr-{{ $data->pid }}">
                                             <td style="text-align: center">{{ $no++ }}</td>
                                             <td>{{ $data->emp_id }}</td>
                                             <td>{{ $data->lname }} {{ $data->fname }} {{ $data->mname }}</td>

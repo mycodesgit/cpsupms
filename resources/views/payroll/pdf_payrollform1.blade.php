@@ -27,7 +27,7 @@
         border-bottom: 2px solid #000408;
       }
   
-      .table tbody + tbody {
+      .table tbody + tbody { 
         border-top: 2px solid #000408;
       }
   
@@ -220,6 +220,7 @@
                   @endphp
                 
                   @foreach ($chunk as $data)
+                    @if($data->offid == $offid)
                     @php
                     $saltype = $data->sal_type;
 
@@ -467,6 +468,7 @@
                       <td>{{ $pid == 1 ? $saltype == 1 || $saltype == 2 ? number_format($rowEarn, 2) : '0.00' : '' }}</td>
                       <td @if($rowEarn < 3001) style="color: red;" @endif>{{ $pid == 2 ? $saltype == 1 || $saltype == 3 ? number_format($rowtotal, 2) : '0.00' : '' }}</td>
                       </tr>
+                    @endif
                   @endforeach
                   <tr>
                     <td></td>
@@ -533,7 +535,7 @@
                             @else
                                 
                             @endif
-                        @endforeach
+                      @endforeach
                     @endif
                     <td>{{ $pid == 1 ? number_format($totalalldeduct + $total_withholdingtax, 2) : number_format($totalded, 2) }}</td>
                     <td>{{ $pid == 1 ? number_format($netamout, 2) : number_format($secondhalftotal, 2) }}</td>
@@ -561,7 +563,7 @@
                 $totalhalft = 0;
                 @endphp
                 <tfoot>
-                  @foreach($chunkedDatas1 as $chunk)
+                  @foreach($chunkedDatas as $chunk)
 
                   @foreach($chunk as $data)
                   @php

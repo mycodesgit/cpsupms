@@ -29,13 +29,13 @@ class ModifyController extends Controller
 
         if($route == "storepayroll"){
             $columns = [
-                'Project' => 'Project',
-                'Net_MPC' => 'Net_MPC',
-                'Graduate' => 'Graduate',
-                'Philhealth' => 'Philhealth',
-                'Pag_ibig' => 'Pag_ibig',
-                'Gsis' => 'Gsis',
-                'Csb' => 'Csb',
+                'Column1' => 'Column1',
+                'Column2' => 'Column2',
+                'Column3' => 'Column3',
+                'Column4' => 'Column4',
+                'Column5' => 'Column5',
+                'Column6' => 'Column6',
+                'Column7' => 'Column7',
             ];
             
             foreach ($columns as $column => $fieldName) {

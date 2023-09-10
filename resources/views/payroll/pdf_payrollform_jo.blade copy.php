@@ -92,7 +92,29 @@
                     @endphp
                 @endif
               @endforeach
+
+              @php
+                $no = 1;
+                $uniqueGroupByValues = array_unique(array_column($datas, 'group_by', 'office_name')); 
+              @endphp
               
+              @foreach ($uniqueGroupByValues as $officeAbbr => $groupValue)
+              
+              @php
+              $no = 1;
+              $totalgrossincome = 0;
+              $totalalldeduction = 0;
+              $totalgrossincome1st = 0;
+              $totalabsences = 0;
+              $totallate = 0;
+              $totaltax1 = 0;
+              $totaltax2 = 0;
+              $totalnsca_mpc = 0;
+              $totalprojects = 0;
+              $totalgrad_guarantor = 0;
+              $totalearnperiod = 0;
+              @endphp
+            
               <table class="table table-striped table-bordered landscape-table" style="table-layout: auto; width: 100%; max-width: none;">
                 <thead>
                   <tr>
@@ -144,23 +166,9 @@
                 </tr>
                 </thead>
                 <tbody>
-                  @php
-                  $no = 1;
-                  $totalgrossincome = 0;
-                  $totalalldeduction = 0;
-                  $totalgrossincome1st = 0;
-                  $totalabsences = 0;
-                  $totallate = 0;
-                  $totaltax1 = 0;
-                  $totaltax2 = 0;
-                  $totalnsca_mpc = 0;
-                  $totalprojects = 0;
-                  $totalgrad_guarantor = 0;
-                  $totalearnperiod = 0;
-                  @endphp
-                
+                 
                   @foreach ($datas as $data)
-                  @if($offid  != 'All' ? $data->offid == $offid : $data->offid != 0) 
+                  @if ($data->group_by === $groupValue)
                     @php
                     $saltype = $data->sal_type;
 
@@ -292,6 +300,7 @@
                   </tr>  
                 </tfoot>         
               </table>
+              @endforeach
               <table class="table table-striped table-bordered landscape-table" style="table-layout: auto; width: 100%; max-width: none;">
                 <tbody class="last-page">
                   <tr>

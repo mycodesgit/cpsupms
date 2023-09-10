@@ -99,7 +99,7 @@
 @include('script.userScript')
 @include('script.officeScript')+-
 @include('script.payrollScript')
-<script>
+{{-- <script>
     window.addEventListener('contextmenu', function (e) {
         e.preventDefault();
     });
@@ -109,7 +109,7 @@
             e.preventDefault();
         }
     });
-</script>
+</script> --}}
 
 </body>
 </html>

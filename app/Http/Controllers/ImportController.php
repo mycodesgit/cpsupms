@@ -242,26 +242,28 @@ class ImportController extends Controller
             
 			if($emp_statname == "Regular"){
                 DB::table('deductions')->insert([
+                    'pay_id'=> $pay_id,
                     'payroll_id'=> $payrollID,
                     'rlip'=> $rlip ?? '0.00',
                     'philhealth' => $ph ?? '0.00',
                     'fasfeed' => '100',
                 ]);
-    
+
                 $data = [
-                    ['column' => 'Project', 'action' => 'Deduction', 'amount' => '0.00'],
-                    ['column' => 'Net_MPC', 'action' => 'Deduction', 'amount' => '0.00'],
-                    ['column' => 'Graduate', 'action' => 'Deduction', 'amount' => '0.00'],
-                    ['column' => 'Philhealth', 'action' => 'Deduction', 'amount' => '0.00'],
-                    ['column' => 'Pag_ibig', 'action' => 'Deduction', 'amount' => '0.00'],
-                    ['column' => 'Gsis', 'action' => 'Deduction', 'amount' => '0.00'],
-                    ['column' => 'Csb', 'action' => 'Deduction', 'amount' => '0.00'],
+                    ['column' => 'Column1', 'label' => 'Project', 'action' => 'Deduction', 'amount' => '0.00'],
+                    ['column' => 'Column2', 'label' => 'Net MPC', 'action' => 'Deduction', 'amount' => '0.00'],
+                    ['column' => 'Column3', 'label' => 'Graduate', 'action' => 'Deduction', 'amount' => '0.00'],
+                    ['column' => 'Column4', 'label' => 'Philhealth', 'action' => 'Deduction', 'amount' => '0.00'],
+                    ['column' => 'Column5', 'label' => 'Pag ibig', 'action' => 'Deduction', 'amount' => '0.00'],
+                    ['column' => 'Column6', 'label' => 'GSIS', 'action' => 'Deduction', 'amount' => '0.00'],
+                    ['column' => 'Column7', 'label' => 'CSB', 'action' => 'Deduction', 'amount' => '0.00'],
                 ];
             }
 
             if($emp_statname == "Job Order"){
 
                 DB::table('deductions')->insert([
+                    'pay_id'=> $pay_id,
                     'payroll_id'=> $payrollID,
                     'tax1' => $tax1,
                 ]);

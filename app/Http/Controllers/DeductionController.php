@@ -140,6 +140,7 @@ class DeductionController extends Controller
                 'fasfeed' => $request->fasfeed,
                 'dis_unliquidated' => $request->dis_unliquidated,
                 'add_less_abs' => $request->add_less_abs,
+                'add_less_abs1' => $request->add_less_abs1,
                 'less_late' => $request->less_late,
             ]);
                 
@@ -155,7 +156,7 @@ class DeductionController extends Controller
         $statID = $payroll->stat_ID;
         $emp_id = $payroll->emp_id;
         $employee = Employee::where('emp_ID', $emp_id)->first();
-        $emp_salary = $employee->salary_rate;
+        $emp_salary = $payroll->salary_rate;
         $stat = Status::find($statID);
         $emp_statname = $stat->status_name;
         
@@ -168,7 +169,7 @@ class DeductionController extends Controller
 
         $additional = $request->add_sal_diff + $request->add_nbc_diff + $request->add_step_incre;
 
-        $earn = $emp_salary + $additional - $deduction->add_less_abs;
+        $earn = ($emp_salary + $additional) - $deduction->add_less_abs;
         $rlip_left = round(($earn * 0.09),2);
 
         $philhealth = round(($earn * 0.02),2);
@@ -184,6 +185,7 @@ class DeductionController extends Controller
             'add_nbc_diff' => $request->add_nbc_diff,
             'add_step_incre' => $request->add_step_incre,
             'rlip' => $rlip_left,
+            'philhealth' => $philhealth,
         ]);
         
         return redirect()->back()->with('success', 'Additionals updated successfully');  

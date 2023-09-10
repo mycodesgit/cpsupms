@@ -68,13 +68,12 @@ class PayrollController extends Controller
         try {
             //Insert data into database 
             $payrollID = DB::table('payrolls')->insertGetId([
-                'payroll_id' => $request->input('statName'),
-                'campus_id' => $request->input('campID'),
-                'payroll_dateStart' => $request->input('PayrollDateStart'),
-                'payroll_dateEnd' => $request->input('PayrollDateEnd'),
-                'number_days' => $request->input('number_days'),
-                'fund' => $request->input('statName') == 4 ? $request->input('fund') : null,
-            ]);            
+                'payroll_id'=>$request->input('statName'),
+                'campus_id'=>$request->input('campID'),
+                'payroll_dateStart'=>$request->input('PayrollDateStart'),
+                'payroll_dateEnd'=>$request->input('PayrollDateEnd'),
+                'number_days'=>$request->input('number_days')
+            ]);
 
 
             if ($request->input('statName') == 1) {
@@ -137,23 +136,8 @@ class PayrollController extends Controller
             
 
             if ($request->input('statName') == 4) {
-                $fund = $request->input('fund');
-                if ($fund == "Income") {
-                    $payable = "Labor and Wages";
-                    $bank = "Cash in Bank-LC, LBP";
-                    $bankcode = "10102020 24";
-                } elseif ($fund == "Yearbook") {
-                    $payable = "Other Payable";
-                    $bank = "Cash in Bank";
-                    $bankcode = "10102020 24";
-                } else {
-                    $payable = "Labor and Wages";
-                    $bank = "Cash MDS-Regular";
-                    $bankcode = "10104040 00";
-                }
-                
                 $codes = [
-                    ['code_for' => 'Job Order', 'code_name' => $payable, 'code' => '50216010 01'],
+                    ['code_for' => 'Job Order', 'code_name' => 'Labor and Wages', 'code' => '50216010 01'],
                     ['code_for' => 'Job Order', 'code_name' => 'Other Payable (NSCA Coop)', 'code' => '29999990 00'],
                     ['code_for' => 'Job Order', 'code_name' => 'Due to BIR (1%)', 'code' => '20201010 00'],
                     ['code_for' => 'Job Order', 'code_name' => 'Due to BIR (2%)', 'code' => '20201010 00'],
@@ -161,8 +145,8 @@ class PayrollController extends Controller
                     ['code_for' => 'Job Order', 'code_name' => 'Other Payable(NSCA MPC)', 'code' => '29999990 00'],
                     ['code_for' => 'Job Order', 'code_name' => 'Other Payable(Grad Sch.)', 'code' => '29999990 00'],
                     ['code_for' => 'Job Order', 'code_name' => 'Other Payable(Project)', 'code' => '29999990 00'],
-                    ['code_for' => 'Job Order', 'code_name' => $bank, 'code' => $bankcode],
-                ];                
+                    ['code_for' => 'Job Order', 'code_name' => 'Cash in Bank-LC, LBP', 'code' => '10102020 24'],
+                ];
             
                 foreach ($codes as $code) {
                     $code['payroll_id'] = $payrollID;
@@ -180,18 +164,29 @@ class PayrollController extends Controller
 
     public function deletePayroll($id){
         $payroll = Payroll::find($id);
+        Code::where('payroll_id', $id)->delete();
+
+        if (!$payroll) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Payroll not found',
+            ]);
+        }
+    
         $PayrollFile = PayrollFile::where('payroll_ID', $id)->first();
 
         if ($PayrollFile) {
             $id1 = $PayrollFile->id;
-            Deduction::where('pay_id', $id)->delete();
-            Modify::where('pay_id', $id)->delete();
-            PayrollFile::where('payroll_ID', $id)->delete();
-        }
-
-        Code::where('payroll_id', $id)->delete();
-        $payroll->delete();
         
+            Deduction::where('payroll_id', $id1)->delete();
+            Modify::where('pay_id', $id)->delete();
+        
+            $PayrollFile->delete();
+        }
+        
+    
+        $payroll->delete();
+    
         return response()->json([
             'status' => 200,
             'message' => 'Deleted Successfully',
@@ -202,8 +197,9 @@ class PayrollController extends Controller
         $PayrollFile = PayrollFile::find($id);
 
         if ($PayrollFile) {
-            Deduction::where('payroll_id', $id)->delete();
-            Modify::where('payroll_id', $id)->delete();
+            $id1 = $PayrollFile->id;
+            Deduction::where('payroll_id', $id1)->delete();
+            Modify::where('payroll_id', $id1)->delete();
             $PayrollFile->delete();
         }
         return response()->json([
@@ -397,14 +393,20 @@ class PayrollController extends Controller
     public function showPdf($payrollID, $statID, $pid, $offid)
     {
         $deduct = "deductions";
-
+        if($offid == "All" && $statID == 1){
+            return redirect()->back()->with('error', 'Select Office / Department first');
+        }
+        $offCond = $offid !== 'All' ? '=' :  '!=';
         $office = Office::where('id', $offid)->first();
         
-        $offid == 'All' ? $offgroup = 0 : $offgroup = $office->group_by;
-        $offgroup == 'All' ? $finalCond = 'of.group_by != ' . $offgroup. 'ORDER BY group_by': $finalCond = 'of.group_by = ' . $offgroup;
-
+        if($statID == 1){
+            $offgroup = $office->group_by;
+            $finalCond = $offgroup == 0 ? 'of.id = ' . $offid : 'of.group_by = ' . $offgroup;
+        }
+        if($statID != 1){
+            $finalCond = 'of.id != 0';
+        }
         $payroll = Payroll::find($payrollID);
-
         $modify = Modify::where('pay_id', $payroll->id)
         ->join('offices as of', 'modifies.off_id', '=', 'of.id')
         ->whereRaw($finalCond)
@@ -414,6 +416,41 @@ class PayrollController extends Controller
         ->join('offices as of', 'modifies.off_id', '=', 'of.id')
         ->get();
 
+        $modifyref = Modify::where('pay_id', $payroll->id)
+        ->join('offices as of', 'modifies.off_id', '=', 'of.id')
+        ->where('action', 'Refund')
+        ->whereRaw($finalCond)
+        ->get();
+
+        $totalref = 0;
+        $totalref += $modifyref->sum('amount');
+        
+        $modifyref1 = Modify::where('pay_id', $payroll->id)
+        ->join('offices as of', 'modifies.off_id', '=', 'of.id')
+        ->where('action', 'Refund')
+        ->get();
+
+        $totalref1 = 0;
+        $totalref1 += $modifyref1->sum('amount');
+
+        $modifyded = Modify::where('pay_id', $payroll->id)
+        ->join('offices as of', 'modifies.off_id', '=', 'of.id')
+        ->where('action', 'Deduction')
+        ->whereRaw($finalCond)
+        ->get();
+
+        $totalded = 0;
+        $totalded += $modifyded->sum('amount');
+
+        $modifyded1 = Modify::where('pay_id', $payroll->id)
+        ->join('offices as of', 'modifies.off_id', '=', 'of.id')
+        ->where('action', 'Deduction')
+        ->get();
+
+        $totalded1 = 0;
+        $totalded1 += $modifyded1->sum('amount');
+
+        // JO
 
         $campID = $payroll->campus_id;
         $dateStart = $payroll->payroll_dateStart;
@@ -423,10 +460,6 @@ class PayrollController extends Controller
             $start = new \DateTime($dateStart);
             $end = new \DateTime($dateEnd);
 
-            $startFormatted = $start->format('F j');
-            $endFormatted = $end->format('F j, Y');
-            $fulldate = "$startFormatted-" . $end->format('j, Y');
-
             $middle = (clone $start)->setDate($start->format('Y'), $start->format('m'), 15);
 
             $month = $start->format('F');
@@ -435,7 +468,6 @@ class PayrollController extends Controller
         }
         
         $statuses = Status::find($statID);
-        $office = Office::all();
         $code = Code::where('payroll_id', $payrollID)->get();
         
         $datas = DB::table('payroll_files')
@@ -450,38 +482,60 @@ class PayrollController extends Controller
                     )
                     ->groupBy('payroll_id');
             }, 'm', 'payroll_files.id', '=', 'm.payroll_id')
-            ->select('of.id as offid', 'payroll_files.id as pid', 'of.*', 'payroll_files.*', 'employees.*', $deduct . '.*', 'm.sumRef', 'm.sumDed')
+            ->select('payroll_files.id as pid', 'payroll_files.*', 'employees.*', $deduct . '.*', 'm.sumRef', 'm.sumDed')
             ->where('payroll_files.payroll_ID', $payrollID)
             ->where('payroll_files.camp_ID', $campID)
             ->where('payroll_files.stat_ID', $statID)
             ->where('payroll_files.startDate', $dateStart)
             ->where('payroll_files.endDate', $dateEnd)
+            ->whereRaw($finalCond)
             ->get();
         
-        // Remove the chunking of data
-            $datas = $datas->all(); // Convert the collection to an array
+        $chunkedDatas = $datas->chunk(15); // Split the data into chunks of 15 rows
 
-            // $customPaper = array(0, 0, 612, 1008);
-            $customPaper = array(0, 0, 550, 1008);
-            // Use different view templates for different statuses
-            if($statID == 1){
-                $viewTemplate = $pid == 1 ? 'payroll.pdf_payrollform_reg' : 'payroll.pdf_payrollform_reg2';
-                $pdf = \PDF::loadView($viewTemplate, compact('datas', 'finalCond', 'fulldate', 'firstHalf', 'secondHalf', 'code', 'modify', 'modify1', 'pid', 'offid', 'office'))->setPaper($customPaper, 'landscape');
-            }
-            if($statID == 4){
-                $viewTemplate = 'payroll.pdf_payrollform_jo';
-                $pdf = \PDF::loadView($viewTemplate, compact('datas', 'firstHalf', 'secondHalf', 'code', 'modify1', 'pid', 'offid'))->setPaper($customPaper, 'landscape');
-            }
+        $datas1 = DB::table('payroll_files')
+        ->join($deduct, 'payroll_files.id', '=', $deduct . '.payroll_id')
+        ->join('employees', 'payroll_files.emp_id', '=', 'employees.emp_ID')
+        ->join('offices as of', 'employees.emp_dept', '=', 'of.id')
+        ->leftJoinSub(function ($query) {
+            $query->from('modifies')
+                ->select('payroll_id', 
+                    DB::raw('SUM(CASE WHEN action = "Refund" THEN amount ELSE 0 END) as sumRef'),
+                    DB::raw('SUM(CASE WHEN action = "Deduction" THEN amount ELSE 0 END) as sumDed')
+                )
+                ->groupBy('payroll_id');
+        }, 'm', 'payroll_files.id', '=', 'm.payroll_id')
+        ->select('payroll_files.id as pid', 'payroll_files.*', 'employees.*', $deduct . '.*', 'm.sumRef', 'm.sumDed')
+        ->where('payroll_files.payroll_ID', $payrollID)
+        ->where('payroll_files.camp_ID', $campID)
+        ->where('payroll_files.stat_ID', $statID)
+        ->where('payroll_files.startDate', $dateStart)
+        ->where('payroll_files.endDate', $dateEnd)
+        ->get();
+    
+        $chunkedDatas1 = $datas1->chunk(15); // Split the data into chunks of 15 rows
 
-            $pdf->setCallbacks([
-                'before_render' => function ($domPdf) {
-                    $domPdf->getCanvas()->page_text(10, 10, "Page {PAGE_NUM} of {PAGE_COUNT}", null, 10, array(0, 0, 0));
-                },
-            ]);
+        // $customPaper = array(0, 0, 612, 1008);
+        $customPaper = array(0, 0, 550, 1008);
+        // Use different view templates for different statuses
+        if($statID == 1){
+            $viewTemplate = 'payroll.pdf_payrollform1';
+            $pdf = \PDF::loadView($viewTemplate, compact('chunkedDatas', 'chunkedDatas1', 'firstHalf', 'secondHalf', 'code', 'modify', 'modify1', 'modifyref', 'modifyref1','modifyded', 'modifyded1','totalref', 'totalref1','totalded', 'totalded1','pid', 'offid'))->setPaper($customPaper, 'landscape');
+        }
+        if($statID == 4){
+            $viewTemplate = 'payroll.pdf_payrollform_jo';
+            $pdf = \PDF::loadView($viewTemplate, compact('chunkedDatas', 'chunkedDatas1', 'firstHalf', 'secondHalf', 'code', 'modify1', 'pid', 'offid'))->setPaper($customPaper, 'landscape');
+        }
+        
+        $pdf->setCallbacks([
+            'before_render' => function ($domPdf) {
+                $domPdf->getCanvas()->page_text(10, 10, "Page {PAGE_NUM} of {PAGE_COUNT}", null, 10, array(0, 0, 0));
+            },
+        ]);
 
-            $pdf->render(); // Generate the PDF
+        $pdf->render(); // Generate the PDF
 
-            return $pdf->stream();
+        return $pdf->stream();
     }
 
     public function payslip($payrollID){
