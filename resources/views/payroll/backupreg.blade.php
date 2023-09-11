@@ -78,12 +78,38 @@
     <body>
       <div class="container">
         <div class="row">
-          <div class="col">
+          <div class="col">     
             <div class="table-responsive">
-                  @php
+                @php 
+                  $noo = 1;
+                  $uniqueGroupByValues = array_unique(array_column($datas, 'group_by', 'office_name')); 
+                @endphp
+                @php
                   $modifythRefund = array_fill_keys(['Column1', 'Column2', 'Column3', 'Column4', 'Column5', 'Column6', 'Column7'], 0);
                   $modifythDeduction = array_fill_keys(['Column1', 'Column2', 'Column3', 'Column4', 'Column5', 'Column6', 'Column7'], 0);
-                  @endphp
+                @endphp
+                @foreach ($uniqueGroupByValues as $officeAbbr => $groupValue)
+                @php
+                    $earn_for_the_period = 0;
+                    $alltotalgsis = 0;
+                    $alltotalpagibig = 0;
+                    $total_payables = 0;
+                    $total_philhealth = 0;
+                    $total_withholdingtax = 0;
+                    $totalalldeduct = 0;
+                    $netamout = 0;
+
+                    $totalmonthlysalary = 0;
+                    $totalabsences = 0;
+                    $totalabsences1 = 0;
+                    $totalstepencre = 0;
+                    $totalnbcdiff = 0;
+                    $totalsaldiff = 0;
+                    $totalhalft = 0;
+                    
+                    $totalRefundAmount = 0; 
+                @endphp
+  
               
                   @foreach ($modify1 as $mody)
                       @if ($mody->action == 'Refund' && array_key_exists($mody->column, $modifythRefund))
@@ -100,6 +126,7 @@
                           @endphp
                       @endif
                   @endforeach
+              <strong style="font-size: 12px;">{{ $officeAbbr }}</strong>
               <table class="table table-striped table-bordered landscape-table" style="table-layout: auto; width: 100%; max-width: none;">
                 <thead>
                   <tr>
@@ -176,27 +203,8 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @php
-                  $no = 1;
-                  $earn_for_the_period = 0;
-                  $alltotalgsis = 0;
-                  $alltotalpagibig = 0;
-                  $total_payables = 0;
-                  $total_philhealth = 0;
-                  $total_withholdingtax = 0;
-                  $totalalldeduct = 0;
-                  $netamout = 0;
-
-                  $totalmonthlysalary = 0;
-                  $totalabsences = 0;
-                  $totalabsences1 = 0;
-                  $totalstepencre = 0;
-                  $totalnbcdiff = 0;
-                  $totalsaldiff = 0;
-                  $totalhalft = 0;
-                  @endphp
-                
                 @foreach ($datas as $data)
+                  @if ($data->group_by === $groupValue)
                     @php
                     $saltype = $data->sal_type;
                     
@@ -259,7 +267,7 @@
                     $secondhalftotal = round($rowEarnSum, 2);
                     @endphp
                     <tr>
-                      <td>{{ $no++ }}</td>
+                      <td>{{ $noo++ }}</td>
                       <td>{{ $data->lname }} {{ $data->fname }}</td>
                       <td>{{ $data->emp_pos }}</td>
                       <td>{{ $data->sg }}</td>
@@ -269,7 +277,6 @@
                       <td>{{ number_format($data->add_step_incre, 2) }}</td>
                       {{-- Adjustments Refund --}}
                       @php
-                        $totalRefundAmount = 0; 
                         $columns_reg = ['Column1' => 0, 'Column2' => 0, 'Column3' => 0, 'Column4' => 0, 'Column5' => 0, 'Column6' => 0, 'Column7' => 0]; 
                       @endphp
 
@@ -349,7 +356,10 @@
                       <td></td>
                       <td @if($rowEarn < 3001) style="color: red;" @endif>{{ $saltype == 1 || $saltype == 3 ? number_format($rowEarn + ($totalRefundAmount - $absences1) - ($totalDeductAmount), 2) : '0.00' }}</td>
                       </tr>
-                  @endforeach
+                      @endif
+                 @endforeach   
+                </tbody> 
+                <tfoot>
                   <tr>
                     <td></td>
                     <td></td>
@@ -362,7 +372,7 @@
                     @php $modrefcoltotalrow = 0; @endphp
                     @if(isset($modrefcoltotal))
                     @foreach ($columns_reg as $column => $totalAmount)
-                        @if (array_key_exists($column, $modrefcoltotal) && $modrefcoltotal[$column] > 0)
+                        @if (array_key_exists($column, $modrefcoltotal))
                             <td>{{ number_format($modrefcoltotal[$column], 2) }}</td>
                             @php
                                 $modrefcoltotalrow += $modrefcoltotal[$column];
@@ -372,25 +382,30 @@
                     @endif
                     <td>{{ number_format($totalabsences1, 2) }}</td>
                     <td>{{ number_format($secondhalftotal + ($modrefcoltotalrow - $totalabsences1), 2) }}</td>
-                    @php $moddedcoltotalrow = 0; @endphp
-                    @if(isset($moddedcoltotal))
-                    @foreach ($columns_reg as $column => $totalAmount)
-                        @if (array_key_exists($column, $moddedcoltotal) && $moddedcoltotal[$column] > 0)
-                            <td>{{ number_format($moddedcoltotal[$column], 2) }}</td>
-                            @php
-                                $moddedcoltotalrow += $moddedcoltotal[$column];
-                            @endphp
-                        @endif
-                    @endforeach
+                    @php
+                    $moddedcoltotalrow = 0;
+                    @endphp
+                    
+                    @if (isset($moddedcoltotal))
+                        @foreach ($columns_reg as $column => $totalAmount)
+                            @if (array_key_exists($column, $moddedcoltotal))
+                                <td>{{ number_format($moddedcoltotal[$column], 2) }}</td>
+                                @php
+                                    $moddedcoltotalrow += $moddedcoltotal[$column];
+                                @endphp
+                            @endif
+                        @endforeach
                     @endif
+                    
                     <td>{{ number_format($moddedcoltotalrow, 2) }}</td>
                     <td>{{ number_format($secondhalftotal + ($modrefcoltotalrow - $totalabsences1) - ($moddedcoltotalrow), 2) }}</td>
                     <td></td>
                     <td>{{ number_format($secondhalftotal + ($modrefcoltotalrow - $totalabsences1) - ($moddedcoltotalrow), 2) }}</td>
-                  </tr>
-                </tbody>      
+                  </tr>  
+                </tfoot>  
               {{-- Grand Total Columns --}}
               </table>
+              @endforeach
               <table class="table table-striped table-bordered landscape-table" style="table-layout: auto; width: 100%; max-width: none;">
                 <tbody class="last-page">
                   <tr>
