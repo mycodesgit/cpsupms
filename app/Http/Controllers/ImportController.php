@@ -217,7 +217,7 @@ class ImportController extends Controller
             }
         }
 
-            $existing_record = DB::table('payroll_files')->where('emp_id', $request->emp_ID)->where('camp_ID', $campID)
+            $existing_record = DB::table('payroll_files')->where('payroll_ID', $payrollID)->where('emp_id', $request->emp_ID)->where('camp_ID', $campID)
             ->where('stat_ID', $statID)->where('startDate', $startDate)->where('endDate', $endDate)
             ->first();
 
