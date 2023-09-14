@@ -229,7 +229,7 @@ th{
                                           @endphp
                                           <tr class="tr-data tr-{{ $data->pid }}">
                                             <td style="text-align: center">{{ $no++ }}</td>
-                                            <td>{{ $data->emp_id }}</td>
+                                            <td>{{ $data->emp_ID }}</td>
                                             <td>{{ $data->lname }} {{ $data->fname }} {{ $data->mname }}</td>
                                             <td>{{ $data->office_abbr }}</td>
                                             <td>{{ $data->emp_pos }}</td>

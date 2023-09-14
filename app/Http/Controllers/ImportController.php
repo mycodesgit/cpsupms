@@ -8,6 +8,8 @@ use App\Models\Payroll;
 use App\Models\Status;
 use App\Models\Campus;
 use App\Models\Modify;
+use App\Models\Employee;
+use App\Models\Deduction;
 class ImportController extends Controller
 {
     public function importPayrolls(Request $request, $payrollID, $statID)
@@ -165,6 +167,7 @@ class ImportController extends Controller
         $startDate = $payroll->payroll_dateStart;
         $endDate = $payroll->payroll_dateEnd;
 
+        $empid = $request->emp_ID;
         // if($emp_statname == "Job Order" || $emp_statname == "Part-time"){
         //     $hr_day = $request->hr_day;
         //     if($request->hr_day == "Hours"){
@@ -187,8 +190,7 @@ class ImportController extends Controller
             $number_hours=$request->number_hours;
             $days = 0;
         }
-
-        $employees = DB::table('employees')->where('emp_id', $request->emp_ID)->first();
+        $employees = DB::table('employees')->where('id', $empid)->first();
         $empOff=$employees->emp_dept;
         if($employees->partime_rate == 0){
             $salary = $employees->emp_salary;
@@ -215,7 +217,7 @@ class ImportController extends Controller
             }
         }
 
-        $existing_record = DB::table('payroll_files')->where('emp_id', $request->emp_ID)->where('camp_ID', $campID)
+            $existing_record = DB::table('payroll_files')->where('emp_id', $request->emp_ID)->where('camp_ID', $campID)
             ->where('stat_ID', $statID)->where('startDate', $startDate)->where('endDate', $endDate)
             ->first();
 
@@ -241,13 +243,53 @@ class ImportController extends Controller
             ]);
             
 			if($emp_statname == "Regular"){
-                DB::table('deductions')->insert([
-                    'pay_id'=> $pay_id,
-                    'payroll_id'=> $payrollID,
-                    'rlip'=> $rlip ?? '0.00',
-                    'philhealth' => $ph ?? '0.00',
-                    'fasfeed' => '100',
-                ]);
+                
+                $deduction = Deduction::where('emp_id', $empid)->latest()->first();
+
+                if($deduction){
+                    DB::table('deductions')->insert([
+                        'pay_id'=> $pay_id,
+                        'payroll_id'=> $payrollID,
+                        'emp_id'=>$empid,
+                        'tax2' => '0.00',
+                        'add_sal_diff' => $deduction->add_sal_diff,
+                        'add_nbc_diff' => $deduction->add_nbc_diff,
+                        'add_step_incre' => $deduction->add_step_incre,
+                        'eml' => $deduction->eml,
+                        'pol_gfal' => $deduction->pol_gfal,
+                        'consol' => $deduction->consol,
+                        'ed_asst_mpl' => $deduction->ed_asst_mpl,
+                        'loan' => $deduction->loan,
+                        'rlip'=> $deduction->rlip,
+                        'gfal' => $deduction->gfal,
+                        'computer' => $deduction->computer,
+                        'mpl' => $deduction->mpl,
+                        'prem' => $deduction->prem,
+                        'calam_loan' => $deduction->calam_loan,
+                        'mp2' => $deduction->mp2,
+                        'philhealth' => $deduction->philhealth,
+                        'holding_tax' => $deduction->holding_tax,
+                        'lbp' => $deduction->lbp,
+                        'cauyan' => $deduction->cauyan,
+                        'projects' => $deduction->projects,
+                        'nsca_mpc' => $deduction->nsca_mpc,
+                        'med_deduction' => $deduction->med_deduction,
+                        'grad_guarantor' => $deduction->grad_guarantor,
+                        'cfi' => $deduction->cfi,
+                        'csb' => $deduction->csb,
+                        'dis_unliquidated' => $deduction->dis_unliquidated,
+                    ]);
+                }
+                else{
+                    DB::table('deductions')->insert([
+                        'pay_id'=> $pay_id,
+                        'payroll_id'=> $payrollID,
+                        'emp_id'=>$empid,
+                        'rlip'=> $rlip ?? '0.00',
+                        'philhealth' => $ph ?? '0.00',
+                        'fasfeed' => '100',
+                    ]);
+                }
 
                 $data = [
                     ['column' => 'Column1', 'label' => 'Project', 'action' => 'Deduction', 'amount' => '0.00'],
@@ -265,6 +307,7 @@ class ImportController extends Controller
                 DB::table('deductions')->insert([
                     'pay_id'=> $pay_id,
                     'payroll_id'=> $payrollID,
+                    'emp_id'=>$empid,
                     'tax1' => $tax1,
                 ]);
 

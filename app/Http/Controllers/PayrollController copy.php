@@ -75,7 +75,6 @@ class PayrollController extends Controller
                 'number_days'=>$request->input('number_days')
             ]);
 
-
             if ($request->input('statName') == 1) {
                 $codes = [
                     ['code_for' => 'Regular', 'code_name' => 'GSIS Payable', 'code' => '', 'status' => ''],

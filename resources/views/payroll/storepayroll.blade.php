@@ -166,7 +166,7 @@ th{
                                             @endphp
                                             <tr id="tr-data" class="tr-data tr-{{ $p->pid }}">
                                                 <td>{{ $no++ }}</td>
-                                                <td>{{ $p->emp_id }}</td>
+                                                <td>{{ $p->emp_ID }}</td>
                                                 <td>{{ $p->lname }} {{ $p->fname }} {{ $p->mname }}</td>
                                                 <td>{{ $p->office_abbr }}</td>
                                                 <td>{{ $p->position }}</td>

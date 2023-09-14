@@ -42,6 +42,8 @@
                                     <th>No.</th>
                                     <th>Campus</th>
                                     <th>Employee Status</th>
+                                    <th>Fund</th>
+                                    <th>Created by.</th>
                                     <th>Date</th>
                                     <th>Action</th>
                                 </tr>
@@ -53,7 +55,7 @@
                                         $dstart = date('M. d, Y', strtotime($p->payroll_dateStart));
                                         $dend = date('M. d, Y', strtotime($p->payroll_dateEnd));
 
-                                        if($p->payroll_id == 1){
+                                        if($p->stat_id == 1){
                                             $routes = "storepayroll";
                                         }else{
                                             $routes = "storepayroll-jo";
@@ -63,6 +65,8 @@
                                         <td>{{ $idd++ }}</td>
                                         <td>{{ $p->campus_name }}</td>
                                         <td>{{ $p->status_name }}</td>
+                                        <td>{{ $p->fund }}</td>
+                                        <td>{{ $p->fname }} {{ $p->lname }}</td>
                                         <td>{{ $dstart }} TO {{ $dend }}</td>
                                         <td>
                                             @if($p->payroll_id == 1)
@@ -75,7 +79,7 @@
                                                 <i class="fas fa-money-bill"></i>
                                             </a>
                                             @endif
-                                            <a href="{{ route($routes, ['payrollID' => $p->id, 'statID' => $p->payroll_id, 'offID' => 'All']) }}" class="btn btn-info btn-sm" title="View">
+                                            <a href="{{ route($routes, ['payrollID' => $p->id, 'statID' => $p->stat_id, 'offID' => 'All']) }}" class="btn btn-info btn-sm" title="View">
                                                 <i class="fas fa-exclamation-circle"></i>
                                             </a>
                                             <button type="button" value="{{ $p->id }}" class="btn btn-danger btn-sm payroll-delete">

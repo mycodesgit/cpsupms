@@ -26,33 +26,38 @@ class PayrollController extends Controller
     public function viewPayroll($campId)
     {
         try {
+            $role = auth()->user()->role;
+            $userid = auth()->user()->id;
             $campId = Crypt::decrypt($campId);
-            $pays = Payroll::join('campuses', 'payrolls.campus_id', '=', 'campuses.id')
-                ->join('statuses', 'payrolls.payroll_id', '=', 'statuses.id')
-                ->select('payrolls.*', 'campuses.campus_name', 'statuses.status_name')
-                ->where('payrolls.campus_id', $campId)
-                ->get();
     
-            if (auth()->user()->role == "Administrator" || auth()->user()->role == "Payroll Administrator") {
+            if ($role == "Administrator" || $role == "Payroll Administrator") {
                 $status = Status::all();
                 $camp = Campus::all();
-            } elseif (auth()->user()->role == "Payroll Extension" && auth()->user()->campus_id != $campId) {
+
+            } elseif ($role == "Payroll Extension" && auth()->user()->campus_id != $campId) {
                 throw new \Exception('You do not have permission to access this page');
             } else {
                 $status = Status::where('status_name', '!=', 'Regular')->get();
                 $camp = Campus::find(auth()->user()->campus_id)->get();
             }
 
+            $pays = Payroll::join('campuses', 'payrolls.campus_id', '=', 'campuses.id')
+            ->join('statuses', 'payrolls.stat_id', '=', 'statuses.id')
+            ->join('users', 'payrolls.user_id', '=', 'users.id')
+            ->select('payrolls.*', 'users.id as userid', 'users.lname', 'users.fname', 'campuses.campus_name', 'statuses.status_name')
+            ->where('payrolls.campus_id', $campId)
+            ->get();
+
             return view("payroll.viewPayroll", compact('camp', 'status', 'campId', 'pays'));
 
         } catch (\Exception $e) { 
             return redirect()->back()->with('error', 'You do not have permission to access this page');  
         }
-    
     } 
 
     public function createPayroll(Request $request){
         $campID = $request->input('campID');
+        $userid = auth()->user()->id;
         //$id = $request->payrollID;
         $validator = Validator::make($request->all(), [
             'statName'=>'required',
@@ -68,12 +73,13 @@ class PayrollController extends Controller
         try {
             //Insert data into database 
             $payrollID = DB::table('payrolls')->insertGetId([
-                'payroll_id' => $request->input('statName'),
+                'stat_id' => $request->input('statName'),
                 'campus_id' => $request->input('campID'),
-                'payroll_dateStart' => $request->input('PayrollDateStart'),
-                'payroll_dateEnd' => $request->input('PayrollDateEnd'),
                 'number_days' => $request->input('number_days'),
                 'fund' => $request->input('statName') == 4 ? $request->input('fund') : null,
+                'payroll_dateStart' => $request->input('PayrollDateStart'),
+                'payroll_dateEnd' => $request->input('PayrollDateEnd'),
+                'user_id'=>$userid,
             ]);            
 
 
@@ -226,9 +232,9 @@ class PayrollController extends Controller
             $offgroup = $office1->group_by;
             $finalCond = $offgroup == 0 ? 'o.id = ' . $offID : 'o.group_by = ' . $offgroup;
         }
-
+        
         $deduction = Deduction::join('payroll_files as pf', 'deductions.payroll_id', '=', 'pf.id')
-        ->join('employees as emp', 'pf.emp_id', '=', 'emp.emp_ID')
+        ->join('employees as emp', 'pf.emp_id', '=', 'emp.id')
         ->join('offices as o', 'emp.emp_dept', '=', 'o.id')
         ->where('pf.payroll_ID', $payrollID)
         ->whereRaw($finalCond)
@@ -276,13 +282,13 @@ class PayrollController extends Controller
             $employee = Employee::all()->where('emp_status', $statID)->where('camp_id', $campId)->where('partime_rate', '!=', 0);
         }
         else{
-            $employee = Employee::all()->where('emp_status', $statID)->where('camp_id', $campId);
+            $employee = Employee::all()->where('emp_status', $statID);
         }
 
-        // try {
+        try {
             $pfiles = DB::table('payroll_files AS pf')
             ->join('deductions AS d', 'pf.id', '=', 'd.payroll_id')
-            ->join('employees AS e', 'pf.emp_id', '=', 'e.emp_ID')
+            ->join('employees AS e', 'pf.emp_id', '=', 'e.id')
             ->join('offices AS o', 'e.emp_dept', '=', 'o.id')
             ->leftJoinSub(function ($query) {
                 $query->from('modifies')
@@ -314,7 +320,7 @@ class PayrollController extends Controller
             if ($start->format('F Y') === $end->format('F Y')) {
                 $daterange = $startFormatted . '-' . $endFormatted;
             } else {
-                $daterange = $startFormatted . ' - ' . $endFormatted;
+                $daterange = $startFormatted . '-' . $endFormatted;
             }
 
             $middle = (clone $start)->setDate($start->format('Y'), $start->format('m'), 15);
@@ -343,9 +349,9 @@ class PayrollController extends Controller
             else{
                 return view('payroll.'.$page, compact('camp', 'office', 'offID', 'status', 'currentcamp', 'empStat', 'pfiles', 'campId', 'statID', 'payrollID', 'employee', 'codes', 'days', 'firstHalf', 'secondHalf', 'daterange', 'modify1', 'modifyRef', 'modifyDed'));
             }
-        // } catch (\Exception $e) {
-        //     return redirect()->back()->with('error', 'An error occurred: ' . 'You do not have permission to access this page'); 
-        // }
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'An error occurred: ' . 'You do not have permission to access this page'); 
+        }
     }
 
     public function updateCode(Request $request) {
@@ -440,7 +446,7 @@ class PayrollController extends Controller
         
         $datas = DB::table('payroll_files')
             ->join($deduct, 'payroll_files.id', '=', $deduct . '.payroll_id')
-            ->join('employees', 'payroll_files.emp_id', '=', 'employees.emp_ID')
+            ->join('employees', 'payroll_files.emp_id', '=', 'employees.id')
             ->join('offices as of', 'employees.emp_dept', '=', 'of.id')
             ->leftJoinSub(function ($query) {
                 $query->from('modifies')
@@ -487,7 +493,7 @@ class PayrollController extends Controller
     public function payslip($payrollID){
   
         $payslip = PayrollFile::join('payrolls', 'payroll_files.payroll_ID', '=', 'payrolls.id')
-        ->join('employees', 'payroll_files.emp_id', '=', 'employees.emp_ID')
+        ->join('employees', 'payroll_files.emp_id', '=', 'employees.id')
         ->select('payroll_files.*', 'employees.*')
         ->where('payroll_files.payroll_ID', $payrollID)
         ->get();
@@ -511,7 +517,7 @@ class PayrollController extends Controller
         $payslipsPerPage = 4; // Number of payslips per page
 
         $payslip = PayrollFile::join('payrolls', 'payroll_files.payroll_ID', '=', 'payrolls.id')
-            ->join('employees', 'payroll_files.emp_id', '=', 'employees.emp_ID')
+            ->join('employees', 'payroll_files.emp_id', '=', 'employees.id')
             ->select('payroll_files.*', 'employees.*')
             ->where('payroll_files.payroll_ID', $request->payrol_ID)
             ->get();

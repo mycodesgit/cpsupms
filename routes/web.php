@@ -78,7 +78,7 @@ Route::group(['middleware'=>['login_auth']],function(){
     Route::post('/office/officeUpdate',[OfficeController::class,'officeUpdate'])->name('officeUpdate');
     Route::get('/office/officeDelete{id}',[OfficeController::class,'officeDelete'])->name('officeDelete');
 
-    //Employee
+    //Employee 
     Route::get('/emp/emplist',[EmployeeController::class,'emp_list'])->name('emp_list');
     Route::get('/logout',[MasterController::class,'logout'])->name('logout');
     

@@ -11,7 +11,7 @@
         margin-bottom: 1rem;
         background-color: transparent;
         border-collapse: collapse;
-        font-size: 8.3px;
+        font-size: 9px;
       }
       
       .table td,
@@ -19,7 +19,7 @@
         padding: 0.3rem;
         vertical-align: top;
         border-top: 1px solid #000408;
-        font-size: 8.3px;
+        font-size: 9px;
       }
   
       .table thead th {
@@ -71,7 +71,7 @@
       .td{
         text-align: center;
       }
-  
+        
       </style>
   </head>
   <body>
@@ -317,29 +317,30 @@
                       <div class="div-signature" style="width: 60%;">Admin Aide III-Payroll In-Charge</div><br>
                     </td>
                     <td>
-                      <div style="width:100%; text-align: left; float: right;">
+                      <span style="width:100%; text-align: left; float: right;">
                         @foreach($code as $c)
                         @if($c->status == "on") {{ $c->code}} {{ $c->code_name }} @endif<br>
-                        @endforeach
+                        @endforeach<br>
                         <strong style="float: right;">TOTAL :</strong>
-                      </div>
+                      </span>
                     </td>
                       <td>
-                        <div style="width:100%; text-align: left; float: left;">
-                          {{ number_format(($totalearnperiod + $modcoltotalrow) - ($totallate + $totalabsences),2)}}<br><br><br><br><br><br><br><br><br>
+                        <span style="width:100%; text-align: left; float: left;">
+                          {{ number_format(($totalearnperiod + $modcoltotalrow) - ($totallate + $totalabsences),2)}}<br><br><br><br><br><br><br><br><br><br>
                           <strong>{{ number_format(($totalearnperiod + $modcoltotalrow) - ($totallate + $totalabsences),2)}}</strong>
-                        </div>
+                        </span>
                       </td>
                       <td>
-                        <div style="width:100%; text-align: left; float: left;">
+                        <span style="width:100%; text-align: left; float: left;">
                           <br><br>
                           {{ number_format($totaltax1,2)}}<br>
                           {{ number_format($totaltax2,2) }}<br><br>
                           {{ number_format($totalnsca_mpc,2) }}<br>
                           {{ number_format($totalgrad_guarantor,2) }}<br>
-                          {{ number_format($totalprojects,2) }}<br><br>
-                          <strong>{{ number_format($totalalldeduction,2) }}</strong>
-                        </div>
+                          {{ number_format($totalprojects,2) }}<br>
+                          {{ number_format(($totalearnperiod + $modcoltotalrow) - ($totallate + $totalabsences) - ($totalalldeduction),2) }}<br><br>
+                          <strong >{{ number_format(($totalearnperiod + $modcoltotalrow) - ($totallate + $totalabsences) - ($totalalldeduction) + ($totalalldeduction),2) }}</strong>
+                        </span>
                       </td>
                     <td colspan="6">
                       <div>Approved for Payment:</div><br><br><br><br>
@@ -356,11 +357,11 @@
                           <div>Date</div>
                         </div>
                       </div>
-
                     </td>               
                   </tr>
                 </tbody>
               </table>
+   
             </div>
           </div>
         </div>

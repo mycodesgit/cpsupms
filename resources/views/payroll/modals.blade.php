@@ -185,7 +185,7 @@
                                     <select class="form-control select2" name="emp_ID" style="width: 91%;" required>
                                         <option value=""> --- Select Employee --- </option>
                                         @foreach($employee as $emp)
-                                            <option value="{{ $emp->emp_ID }}">{{ $emp->emp_ID }} - {{ $emp->lname }} {{ $emp->fname }}</option>
+                                            <option value="{{ $emp->id }}">{{ $emp->emp_ID }} - {{ $emp->lname }} {{ $emp->fname }}</option>
                                         @endforeach
                                     </select>
                                 </div>

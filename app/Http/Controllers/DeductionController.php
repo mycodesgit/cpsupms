@@ -62,9 +62,9 @@ class DeductionController extends Controller
         + $request->rlip + $request->gfal + $request->mpl + $request->computer + $request->prem + $request->philhealth + $request->holding_tax + $request->lbp 
         + $request->cauyan + $request->projects + $request->nsca_mpc + $request->med_deduction+ $request->grad_guarantor 
         + $request->cfi + $request->csb + $request->fasfeed + $request->dis_unliquidated + $request->add_less_abs;
-
+        
         $additional = $deduction->add_sal_diff + $deduction->add_nbc_diff + $deduction->add_step_incre;
-
+            
         $earn = $emp_salary + $additional - $request->add_less_abs;
         $rlip_left = round(($earn * 0.09),2);
         $philhealth = round(($earn * 0.02),2);
