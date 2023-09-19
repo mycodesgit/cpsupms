@@ -196,9 +196,11 @@
                         $("#gfal").val(deductions[0].gfal);
                         $("#mpl").val(deductions[0].mpl);
                         $("#computer").val(deductions[0].computer);
+                        $("#health").val(deductions[0].health);
                         $("#prem").val(deductions[0].prem);
                         $("#calam_loan").val(deductions[0].calam_loan);
                         $("#mp2").val(deductions[0].mp2);
+                        $("#house_loan").val(deductions[0].house_loan);
                         $("#philhealth").val(deductions[0].philhealth);
                         $("#holding_tax").val(deductions[0].holding_tax);
                         $("#lbp").val(deductions[0].lbp);

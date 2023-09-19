@@ -179,7 +179,7 @@ class ImportController extends Controller
         //     $days = $number_hours/8;
         // }
 
-        if($emp_statname == "Regular" || $emp_statname == "Job Order"){
+        if($statID == 1 || $statID == 4){
             $hr_day = "Hours";
             $number_hours=$request->number_hours * 8;
             $days = $request->number_hours;
@@ -201,12 +201,12 @@ class ImportController extends Controller
             $total_sal = floatval(sprintf("%.2f",$salary * $number_hours));
         }
 
-        if($emp_statname == "Job Order" || $emp_statname == "Part-time" || $emp_statname == "Part-time/JO"){
+        if($statID == 4 || $emp_statname == "Part-time" || $emp_statname == "Part-time/JO"){
             $half = round(($employees->emp_salary / 2), 2);
             $tax1 = floatval(sprintf("%.2f",$half * 0.01));
         }
 
-        if($emp_statname == "Regular"){
+        if($statID == 1){
             $tax1 = "0.00";
             $rlip = round(($employees->emp_salary * 0.09), 2);
             if($employees->emp_salary >= 80000){
@@ -242,7 +242,7 @@ class ImportController extends Controller
                 'stat_ID' => $statID,
             ]);
             
-			if($emp_statname == "Regular"){
+			if($statID == 1){
                 
                 $deduction = Deduction::where('emp_id', $empid)->latest()->first();
 
@@ -302,7 +302,7 @@ class ImportController extends Controller
                 ];
             }
 
-            if($emp_statname == "Job Order"){
+            if($statID == 4){
 
                 DB::table('deductions')->insert([
                     'pay_id'=> $pay_id,

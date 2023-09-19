@@ -143,8 +143,8 @@
                                   $saltype = $data->sal_type;
                                   $monthlysal = $data->salary_rate;
                                   $total_additional = $data->add_sal_diff + $data->add_nbc_diff + $data->add_step_incre - $data->add_less_abs;
-                                  $total_gsis_deduction = $data->eml + $data->pol_gfal + $data->consol + $data->ed_asst_mpl + $data->loan + $data->rlip + $data->gfal + $data->computer;
-                                  $total_pugibig_deduction = $data->mpl + $data->prem + $data->calam_loan + $data->mp2;
+                                  $total_gsis_deduction = $data->eml + $data->pol_gfal + $data->consol + $data->ed_asst_mpl + $data->loan + $data->rlip + $data->gfal + $data->computer + $data->health;
+                                  $total_pugibig_deduction = $data->mpl + $data->prem + $data->calam_loan + $data->mp2 + $data->house_loan;
                                   $total_other_payables = $data->lbp + $data->cauyan + $data->projects + $data->nsca_mpc + $data->med_deduction + $data->grad_guarantor + $data->cfi + $data->csb + $data->fasfeed + $data->dis_unliquidated;
                                   $total_deduction = $total_gsis_deduction + $total_pugibig_deduction + $data->philhealth + $data->holding_tax + $total_other_payables;
                                   $earnperiod = $total_additional + $data->salary_rate;
@@ -262,7 +262,10 @@
                           $grandrowEarntotal[] = $rowEarntotal + $rowEarn2total;
                         @endphp
                         <tr>
-                          <td style="text-align: right" colspan="4"></td>
+                          <td></td>
+                          <td></td>
+                          <td></td>
+                          <td></td>
                           <td width="40">{{ number_format($totalmonthlysal, 2) }}</td>
                           <td width="40">{{ number_format($totalsaldiff, 2) }}</td>
                           <td width="40">{{ number_format($totalnbcdiff, 2) }}</td>

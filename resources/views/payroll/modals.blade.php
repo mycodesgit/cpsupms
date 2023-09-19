@@ -431,7 +431,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <label for="exampleInputName">loan</label>
+                                    <label for="exampleInputName">MPL loan</label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">
@@ -474,6 +474,17 @@
                                         <input type="number" id="computer" name="computer" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
                                     </div>
                                 </div>
+                                <div class="col-md-4">
+                                    <label for="exampleInputName">Health</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="far fa-clipboard"></i>
+                                            </span>
+                                        </div>
+                                        <input type="number" id="health" name="health" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
+                                    </div>
+                                </div>
                             </div>
                             <h4 class="pt-3"><strong>PAG-IBIG DEDUCTIONS</strong></h4>
                             <div class="form-row">
@@ -500,7 +511,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <label for="exampleInputName">Calaming Loan</label>
+                                    <label for="exampleInputName">Calamity Loan</label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">
@@ -519,6 +530,17 @@
                                             </span>
                                         </div>
                                         <input type="number" id="mp2" name="mp2" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="exampleInputName">Housing Loan</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="far fa-clipboard"></i>
+                                            </span>
+                                        </div>
+                                        <input type="number" id="house_loan" name="house_loan" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
                                     </div>
                                 </div>
                             </div>
@@ -691,9 +713,9 @@
                                         <input type="number" id="add_less_abs" name="add_less_abs" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
                                     </div>
                                 </div>
-
+                                @if($empStat == "Regular")
                                 <div class="col-md-{{$empStat == "Regular" ? '4' : '6'}}">
-                                    <label for="exampleInputName">Less Absences 2nd</label>
+                                    <label for="exampleInputName">Less Absences @if($empStat == "Regular") 2nd @endif</label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">
@@ -703,6 +725,7 @@
                                         <input type="number" id="add_less_abs1" name="add_less_abs1" step="any" min="0" onchange="if (this.value <= 0) {this.value = '0.00';}" class="form-control float-right">
                                     </div>
                                 </div>
+                                @endif
                                 @if($empStat == "Job Order")
                                 <div class="col-md-{{$empStat == "Regular" ? '4' : '6'}}">
                                     <label for="exampleInputName">Less Late</label>

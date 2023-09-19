@@ -286,9 +286,9 @@ class PayrollController extends Controller
         }
 
         try {
-            $pfiles = DB::table('payroll_files AS pf')
-            ->join('deductions AS d', 'pf.id', '=', 'd.payroll_id')
-            ->join('employees AS e', 'pf.emp_id', '=', 'e.id')
+            $pfiles = PayrollFile::query()
+            ->join('deductions AS d', 'payroll_files.id', '=', 'd.payroll_id')
+            ->join('employees AS e', 'payroll_files.emp_id', '=', 'e.id')
             ->join('offices AS o', 'e.emp_dept', '=', 'o.id')
             ->leftJoinSub(function ($query) {
                 $query->from('modifies')
@@ -297,13 +297,13 @@ class PayrollController extends Controller
                         DB::raw('SUM(CASE WHEN action = "Deduction" THEN amount ELSE 0 END) as sumDed')
                     )
                     ->groupBy('payroll_id');
-            }, 'm', 'pf.id', '=', 'm.payroll_id')
-            ->select('pf.id as pid', 'pf.*', 'e.*', 'd.*', 'o.*', 'm.sumRef', 'm.sumDed')
-            ->where('pf.payroll_ID', '=', $payrollID)
-            ->where('pf.camp_ID', '=', $campId)
-            ->where('pf.stat_ID', '=', $statID)
-            ->where('pf.startDate', '=', $startDate)
-            ->where('pf.endDate', '=', $endDate)
+            }, 'm', 'payroll_files.id', '=', 'm.payroll_id')
+            ->select('payroll_files.id as pid', 'payroll_files.*', 'e.*', 'd.*', 'o.office_abbr', 'm.sumRef', 'm.sumDed')
+            ->where('payroll_files.payroll_ID', '=', $payrollID)
+            ->where('payroll_files.camp_ID', '=', $campId)
+            ->where('payroll_files.stat_ID', '=', $statID)
+            ->where('payroll_files.startDate', '=', $startDate)
+            ->where('payroll_files.endDate', '=', $endDate)
             ->whereRaw($finalCond)
             ->get();
             
@@ -402,6 +402,7 @@ class PayrollController extends Controller
 
     public function showPdf($payrollID, $statID, $pid, $offid)
     {
+        ini_set('memory_limit', '1024M');
         $deduct = "deductions";
 
         $office = Office::where('id', $offid)->first();

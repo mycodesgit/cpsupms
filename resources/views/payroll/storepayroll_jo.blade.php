@@ -245,14 +245,7 @@ th{
                                                     @endphp
                                                 @endif
                                             @endforeach
-                                            
-                                            @foreach ($modify1 as $mody)
-                                                @if ($mody->action == 'Additionals' && array_key_exists($mody->column, $columns_jo))
-                                                    @php
-                                                        $columns_jo[$mody->column] += $mody->amount;
-                                                    @endphp
-                                                @endif
-                                            @endforeach
+                                   
                                             @foreach ($modify1 as $mody)
                                                 @if ($mody->payroll_id == $data->pid && array_key_exists($mody->column, $columns_jo))
                                                     @php
@@ -289,7 +282,7 @@ th{
                                             </td>
                                             </tr>
                                         @endforeach 
-                                      </tbody>   
+                                      </tbody>  
                                 </table>
                             </div>
                         </div>   

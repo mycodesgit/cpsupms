@@ -128,8 +128,8 @@ th{
                                                 $absent = $p->add_less_abs;
                                                 $total_add = floatval(sprintf("%.2f",$p->add_sal_diff + $p->add_nbc_diff + $p->add_step_incre - $absent, 2)); 
                                                 
-                                                $total_deduct = floatval(sprintf("%.2f",$p->eml + $p->pol_gfal + $p->consol + $p->ed_asst_mpl + $p->loan + $p->rlip + $p->gfal + $p->computer 
-                                                + $p->mpl + $p->prem + $p->calam_loan + $p->mp2 + $p->philhealth + $p->holding_tax + $p->lbp + $p->cauyan + $p->projects + $p->nsca_mpc + $p->med_deduction
+                                                $total_deduct = floatval(sprintf("%.2f",$p->eml + $p->pol_gfal + $p->consol + $p->ed_asst_mpl + $p->loan + $p->rlip + $p->gfal + $p->computer + $p->health
+                                                + $p->mpl + $p->prem + $p->calam_loan + $p->mp2 + $p->house_loan + $p->philhealth + $p->holding_tax + $p->lbp + $p->cauyan + $p->projects + $p->nsca_mpc + $p->med_deduction
                                                 + $p->grad_guarantor + $p->cfi + $p->csb + $p->fasfeed + $p->dis_unliquidated, 2));
 
                                                 $Rrate_per_day = $p->salary_rate / $days;

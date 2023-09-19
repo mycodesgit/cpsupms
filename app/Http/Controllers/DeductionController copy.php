@@ -58,6 +58,11 @@ class DeductionController extends Controller
         
         $deduction = Deduction::where('payroll_id', $id)->first();
         
+        $total_deduct = $request->eml + $request->pol_gfal + $request->consol + $request->ed_asst_mpl + $request->loan 
+        + $request->rlip + $request->gfal + $request->mpl + $request->computer + $request->health + $request->prem + $request->philhealth + $request->holding_tax + $request->lbp 
+        + $request->cauyan + $request->projects + $request->nsca_mpc + $request->med_deduction+ $request->grad_guarantor 
+        + $request->cfi + $request->csb + $request->fasfeed + $request->dis_unliquidated + $request->add_less_abs;
+        
         $additional = $deduction->add_sal_diff + $deduction->add_nbc_diff + $deduction->add_step_incre;
             
         $earn = $emp_salary + $additional - $request->add_less_abs;
@@ -67,6 +72,11 @@ class DeductionController extends Controller
         if($earn >= 80000){
             $philhealth = 1600.00;
         }
+
+        $net_regular = floatval(sprintf("%.2f",$emp_salary + $additional - $total_deduct, 2));
+
+        $total_deduct = number_format($total_deduct, 2);
+        $net_regular = number_format($net_regular, 2);
 
         if($tax2 <= 0){ 
             $tax2 = '0.00';
@@ -89,7 +99,7 @@ class DeductionController extends Controller
             }
 
             $half = round(($emp_salary / 2) + ($totaladd) - ($request->add_less_abs + $request->less_late), 2);            
-            $tax1 = floatval(sprintf("%.2f",$half * 0.03));
+            $tax1 = floatval(sprintf("%.2f",$half * 0.01));
 
             Deduction::where('payroll_id', $id)->update([
                 'tax1' => $tax1,
@@ -153,6 +163,11 @@ class DeductionController extends Controller
         $emp_statname = $stat->status_name;
         
         $deduction = Deduction::where('payroll_id', $id)->first();
+        
+        $total_deduct = $deduction->eml + $deduction->pol_gfal + $deduction->consol + $deduction->ed_asst_mpl + $deduction->loan 
+        + $deduction->rlip + $deduction->mpl + $deduction->prem + $deduction->philhealth + $deduction->holding_tax + $deduction->lbp 
+        + $deduction->cauyan + $deduction->projects + $deduction->nsca_mpc + $deduction->med_deduction+ $deduction->grad_guarantor 
+        + $deduction->cfi + $deduction->csb + $deduction->fasfeed + $deduction->dis_unliquidated + $deduction->add_less_abs;
 
         $additional = $request->add_sal_diff + $request->add_nbc_diff + $request->add_step_incre;
 
@@ -164,6 +179,8 @@ class DeductionController extends Controller
         if($earn >= 80000){
             $philhealth = 1600.00;
         }
+        
+        $net_regular = floatval(sprintf("%.2f",$emp_salary + $additional - $total_deduct, 2));
         
         Deduction::where('payroll_id', $id)->update([
             'add_sal_diff' => $request->add_sal_diff,
