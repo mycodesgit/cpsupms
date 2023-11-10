@@ -60,6 +60,52 @@ th{
                                         <a href="{{ route("pdf", ['payrollID' => $payrollID, 'statID' => $statID, 'pid' => 2, 'offid' => $offID]) }}" target="_blank" class="dropdown-item">{{ $secondHalf }}</a>
                                     </div>
                                 </div>
+                                <div class="btn-group">
+                                    <button id="open-pdf" target="_blank"  class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown">
+                                        <i class="fas fa-print"></i> Transmittal
+                                    </button>
+                                    <div class="dropdown-menu" x-out-of-boundaries="" style="">
+                                        <a href="{{ route("transmittal", ['payrollID' => $payrollID, 'statID' => $statID, 'pid' => 1, 'offid' => $offID]) }}" target="_blank" class="dropdown-item">{{ $firstHalf }}</a>
+                                        <a href="{{ route("transmittal", ['payrollID' => $payrollID, 'statID' => $statID, 'pid' => 2, 'offid' => $offID]) }}" target="_blank" class="dropdown-item">{{ $secondHalf }}</a>
+                                    </div>
+                                </div>
+                                <div class="btn-group">
+                                    <button id="open-pdf" target="_blank"  class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown">
+                                        <i class="fas fa-print"></i> Remittance
+                                    </button>
+                                    <div class="dropdown-menu" x-out-of-boundaries="" style="">
+                                        <a href="#" target="_blank" class="dropdown-item"></a>
+                                        <a href="#" target="_blank" class="dropdown-item"></a>
+                                        <a href="#" target="_blank" class="dropdown-item"></a>
+                                        <a href="#" target="_blank" class="dropdown-item"></a>
+                                        <a href="#" target="_blank" class="dropdown-item"></a>
+                                        <a href="{{ route("remittance", ['col' => 'eml', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> EML</a>
+                                        <a href="{{ route("remittance", ['col' => 'pol_gfal', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> POLICY</a>
+                                        <a href="{{ route("remittance", ['col' => 'consol', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> Consol</a>
+                                        <a href="{{ route("remittance", ['col' => 'ed_asst_mpl', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> MPL loan</a>
+                                        <a href="{{ route("remittance", ['col' => 'rlip', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> RLIP</a>
+                                        <a href="{{ route("remittance", ['col' => 'gfal', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> GFAL</a>
+                                        <a href="{{ route("remittance", ['col' => 'computer', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> Computer</a>
+                                        <a href="{{ route("remittance", ['col' => 'health', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> Health</a>
+                                        <a href="{{ route("remittance", ['col' => 'mpl', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> MPL</a>
+                                        <a href="{{ route("remittance", ['col' => 'prem', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> PREM.</a>
+                                        <a href="{{ route("remittance", ['col' => 'calam_loan', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> Calamity Loan</a>
+                                        <a href="{{ route("remittance", ['col' => 'mp2', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> MP2.</a>
+                                        <a href="{{ route("remittance", ['col' => 'house_loan', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> Housing Loan</a>
+                                        <a href="{{ route("remittance", ['col' => 'philhealth', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> Philhealth</a>
+                                        <a href="{{ route("remittance", ['col' => 'holding_tax', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> Withholding Tax</a>
+                                        <a href="{{ route("remittance", ['col' => 'lbp', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> LBP</a>
+                                        <a href="{{ route("remittance", ['col' => 'cauyan', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> Cauyan</a>
+                                        <a href="{{ route("remittance", ['col' => 'projects', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> Projects</a>
+                                        <a href="{{ route("remittance", ['col' => 'nsca_mpc', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> NSCA MPC</a>
+                                        <a href="{{ route("remittance", ['col' => 'med_deduction', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> Medical Deduction</a>
+                                        <a href="{{ route("remittance", ['col' => 'grad_guarantor', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> Graduate Sch. / Guar.</a>
+                                        <a href="{{ route("remittance", ['col' => 'cfi', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> CFI</a>
+                                        <a href="{{ route("remittance", ['col' => 'csb', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> CSB</a>
+                                        <a href="{{ route("remittance", ['col' => 'fasfeed', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> FASFEED</a>
+                                        <a href="{{ route("remittance", ['col' => 'dis_unliquidated', 'payrollID' => $payrollID]) }}" target="_blank" class="dropdown-item"> Disallow ANCE / UNLIQUIDATED</a>
+                                    </div>
+                                </div>
                             </h3>
                         </div>
                         <div class="col-md-8">
@@ -115,6 +161,7 @@ th{
                                                 <th>Net amount</th>
                                                 <th>{{ $firstHalf }}</th>
                                                 <th>{{ $secondHalf }}</th>
+                                                <th>Status</th>
                                                 <th width="13%">Action</th>
                                             </tr>
                                     </thead>
@@ -145,7 +192,8 @@ th{
                                                 $saltype = $p->sal_type;
 
                                                 $earn = round($Ramount + $total_add - $total_deduct, 2);
-                                                $decimalPoint = ($earn * 100) % 100;
+                                                $decimalPoint = ($earn - floor($earn)) * 100;
+                                                $decimalPoint = round($decimalPoint);
                                                 $earns = ($Ramount + $total_add - $total_deduct) / 2;
                                              
                                                 if ($saltype == 1) {
@@ -162,7 +210,6 @@ th{
                                                     $sechalearn = $Ramount + $total_add - $total_deduct;
                                                     $sechalearn1 = $Ramount + $total_add - $total_deduct;
                                                 }
-
                                             @endphp
                                             <tr id="tr-data" class="tr-data tr-{{ $p->pid }}">
                                                 <td>{{ $no++ }}</td>
@@ -174,14 +221,24 @@ th{
                                                 <td id="addition-{{ $p->pid }}">{{ number_format($total_add, 2); }}</td>
                                                 <td class="text-danger">{{ number_format($RamountReg, 2) }}</td>
                                                 <td id="deduct-{{ $p->pid }}">{{ number_format($total_deduct, 2); }}</td>
-                                                <td id="net-{{ $p->pid }}" class="text-danger">{{ number_format($Ramount + $total_add - $total_deduct, 2) }}</td>
-                                                <td class="firstHalf @if($sechalearn1 <= 3000)text-danger @endif">{{ $saltype == 2 || $saltype == 1 ? number_format($sechalearn1, 2) : '0.00' }}</td>
-                                                {{-- <td class="secondtHalf @if($earns + $p->sumRef - $p->sumDed <= 3000)text-danger @endif">{{ $saltype == 3 || $saltype == 1 ? number_format($sechalearn, 2) : '0.00' }}</td> --}}
-                                                <td class="secondtHalf @if($sechalearn + $p->sumRef - $p->sumDed <= 3000)text-danger @endif">{{ $saltype == 3 || $saltype == 1 ? number_format($sechalearn + $p->sumRef - $p->sumDed, 2) : '0.00';}}</td>
-                                               
+                                                <td id="net-{{ $p->pid }}" class="@if($Ramount + $total_add - $total_deduct <= 3000)text-danger @endif">{{ number_format($Ramount + $total_add - $total_deduct, 2) }}</td>
+                                                <td class="firstHalf{{ $p->status == 3 ? '-Incomplete' : '' }}">{{ $saltype == 2 || $saltype == 1 ? number_format($sechalearn1, 2) : '0.00' }}</td>
+                                                <td class="secondtHalf{{ $p->status == 3 ? '-Incomplete' : '' }}">{{ $saltype == 3 || $saltype == 1 ? number_format($sechalearn + $p->sumRef - $p->sumDed, 2) : '0.00';}}</td>
                                                 <td>
                                                     <div class="btn-group">
-                                                        <button type="button" style="height:32px;" class="btn btn-{{ $p->sal_type == 1 ? 'secondary' : ''}}{{ $p->sal_type == 2 ? 'primary' : ''}}{{ $p->sal_type == 3 ? 'success' : ''}} dropdown-toggle" data-toggle="dropdown" aria-expanded="false" title="deductions">
+                                                        <span type="button" style="height:32px;" class="btn btn-{{ $p->status == 1 ? 'success' : ''}}{{ $p->status == 2 ? 'warning' : ''}}{{ $p->status == 3 ? 'danger' : ''}} dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                                        {{ $p->status == 1 ? 'Complete within 1-15' : ''}} {{ $p->status == 2 ? 'Complete within 16-31' : ''}} {{ $p->status == 3 ? 'Incomplete' : ''}}
+                                                        </span>
+                                                        <div class="dropdown-menu" x-out-of-boundaries="" style="">
+                                                            <a href="{{ route('stat-update', ['id' => $p->pid, 'val' => '1']) }}" class="dropdown-item">Complete within 1-15</a>
+                                                            <a href="{{ route('stat-update', ['id' => $p->pid, 'val' => '2']) }}" class="dropdown-item">Complete within 16-31</a>
+                                                            <a href="{{ route('stat-update', ['id' => $p->pid, 'val' => '3']) }}" class="dropdown-item">Incomplete</a>
+                                                        </div>                                                        
+                                                    </div> 
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group">
+                                                        <button type="button" style="height:32px;" class="btn btn-{{ $p->sal_type == 1 ? 'secondary' : ''}}{{ $p->sal_type == 2 ? 'primary' : ''}}{{ $p->sal_type == 3 ? 'success' : ''}} dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
                                                         {{ $p->sal_type }}
                                                         </button>
                                                         <div class="dropdown-menu" x-out-of-boundaries="" style="">
@@ -191,7 +248,7 @@ th{
                                                         </div>                                                        
                                                     </div> 
                                                     <div class="btn-group">
-                                                        <button type="button" style="height:32px;" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-expanded="false" title="deductions">
+                                                        <button type="button" style="height:32px;" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
                                                         </button>
                                                         <div class="dropdown-menu" x-out-of-boundaries="" style="">
                                                         <button id="{{ $p->pid }}" value="1" data-date="{{ $firstHalf }}" data-modes="1"  style="height:32px;" class="dropdown-item additional" title="additionals">Additional {{ $firstHalf }}</button>
@@ -210,6 +267,7 @@ th{
                             </div>
                         </div>   
                         @foreach($pfiles as $p)
+                            @if($p->status != 3)
                             @php
                                 $emltotal = 0;
 
@@ -224,6 +282,7 @@ th{
 
                                 $emltotal += $eml;
                             @endphp
+                            @endif
                         @endforeach
                         @if(isset($deduction))
                         <div class="col-10 mt-3">

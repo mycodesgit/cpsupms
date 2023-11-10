@@ -69,7 +69,7 @@
                                         <td>{{ $p->fname }} {{ $p->lname }}</td>
                                         <td>{{ $dstart }} TO {{ $dend }}</td>
                                         <td>
-                                            @if($p->payroll_id == 1)
+                                            @if($p->stat_id == 1)
                                             <a href="{{ route('payslip', ['payrollID' => $p->id]) }}" class="btn btn-info btn-sm" title="Payslip">
                                                 <i class="fas fa-money-bill"></i>
                                             </a>                                                    

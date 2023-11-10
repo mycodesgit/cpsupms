@@ -100,6 +100,7 @@
                 $totalsaldiff = 0;
                 $totalhalft = 0;
                 $rowEarntotal = 0;
+                $rowEarntotal1 = 0;
                 $rowEarn1total = 0;
                 $rowEarn2total = 0;
               @endphp
@@ -163,13 +164,14 @@
                                   $totalnbcdiff += $data->add_nbc_diff;
                                   $totalsaldiff += $data->add_sal_diff;
 
-                                  $rowEarn1total = 0;
+                                  // $rowEarn1total = 0;
 
                                   $rowEarns = round($data->salary_rate + $total_additional - $total_deduction, 2);
                                   $decimalPoint = ($rowEarns - floor($rowEarns)) * 100;
                                   $decimalPoint = round($decimalPoint);
                                   if ($saltype == 1) {
                                       $rowEarn = $rowEarns / 2;
+                                      $rowEarnings = $rowEarns / 2;
                                   }elseif ($saltype == 2) {
                                     $rowEarn1 = $rowEarns;
                                     $rowEarnsArray1[] = $rowEarn1;
@@ -180,16 +182,16 @@
                                     $rowEarnSum2 = array_sum($rowEarnsArray2);
                                   }
 
-                                  $rowEarn = isset($rowEarn) ? $rowEarn : 0.00;
-                                  $rowEarnsArray[] = $rowEarn;
-                                  $rowEarnSum = array_sum($rowEarnsArray);
+                                  // $rowEarn = isset($rowEarn) ? $rowEarn : 0.00;
+                                  // $rowEarnsArray[] = $rowEarn;
+                                  // $rowEarnSum = array_sum($rowEarnsArray);
 
-                                  $rowEarnSum = isset($rowEarnSum) ? $rowEarnSum : 0.00;
-                                  $rowEarnSum1 = isset($rowEarnSum1) ? $rowEarnSum1 : 0.00;
-                                  $rowEarnSum2 = isset($rowEarnSum2) ? $rowEarnSum2 : 0.00;
+                                  // $rowEarnSum = isset($rowEarnSum) ? $rowEarnSum : 0.00;
+                                  // $rowEarnSum1 = isset($rowEarnSum1) ? $rowEarnSum1 : 0.00;
+                                  // $rowEarnSum2 = isset($rowEarnSum2) ? $rowEarnSum2 : 0.00;
 
-                                  $firsthalftotal = round($rowEarnSum + $rowEarnSum1, 2);
-                                  $secondhalftotal = round($rowEarnSum + $rowEarnSum2, 2);
+                                  // $firsthalftotal = round($rowEarnSum + $rowEarnSum1, 2);
+                                  // $secondhalftotal = round($rowEarnSum + $rowEarnSum2, 2);
                                   @endphp
                                   <tr>
                                       <td >{{ $no++ }}</td>
@@ -209,8 +211,12 @@
                                       <td>{{ number_format($total_other_payables, 2) }}</td>
                                       <td>{{ number_format($total_deduction, 2) }}</td>
                                       <td>{{ number_format($data->salary_rate + $total_additional - $total_deduction, 2) }}</td>
-                                      <td @if($rowEarn < 3001 && $rowEarn != 0.00) style="color: red;" @endif>
+                                      <td>
                                           @if($saltype == 1)
+                                              @php  
+                                                $rowEarn = round($rowEarn, 2); 
+                                                $rowEarntotal += $rowEarn; 
+                                              @endphp
                                               {{ number_format($rowEarn, 2) }}
                                           @elseif($saltype == 2)
                                             @php $rowEarn1total += $rowEarn1 @endphp
@@ -220,18 +226,18 @@
                                           @endif
                                       </td>
                                     
-                                      <td @if($rowEarn < 3001 && $rowEarn != 0.00) style="color: red;" @endif>
+                                      <td>
                                         @if($saltype == 1)
                                           @php
                                           if ($decimalPoint % 2 === 0) {
-                                              $rowEarn = round($rowEarn, 2);
+                                              $rowEarnings = $rowEarnings;
                                           } else {
-                                              $rowEarn = round($rowEarn, 3);
-                                              $rowEarn = floor($rowEarn * 100) / 100;
+                                              $rowEarnings = round($rowEarnings, 3);
+                                              $rowEarnings = floor($rowEarnings * 100) / 100;
                                           }
-                                          $rowEarntotal += $rowEarn; 
+                                          $rowEarntotal1 += $rowEarnings; 
                                           @endphp
-                                            {{ number_format($rowEarn, 2) }}
+                                            {{ number_format($rowEarnings, 2) }}
                                         @elseif($saltype == 3)
                                           @php $rowEarn2total += $rowEarn2 @endphp
                                             {{ number_format($rowEarn2, 2) }}
@@ -258,8 +264,8 @@
                           $grandtotal_payables[] = $total_payables;
                           $grandtotalalldeduct[] = $totalalldeduct + $total_withholdingtax;
                           $grandnetamout[] = $netamout;
-                          $grandfirsthalftotal[] = $firsthalftotal + $rowEarn1total;
-                          $grandrowEarntotal[] = $rowEarntotal + $rowEarn2total;
+                          $grandfirsthalftotal[] = $rowEarntotal + $rowEarn1total;
+                          $grandrowEarntotal[] = $rowEarntotal1 + $rowEarn2total;
                         @endphp
                         <tr>
                           <td></td>
@@ -279,8 +285,8 @@
                           <td width="40">{{ number_format($total_payables, 2) }}</td>
                           <td width="40">{{ number_format($totalalldeduct + $total_withholdingtax, 2) }}</td>
                           <td width="40">{{ number_format($netamout, 2) }}</td>
-                          <td width="40">{{ number_format($firsthalftotal + $rowEarn1total, 2)}}</td>
-                          <td width="40">{{ number_format($rowEarntotal + $rowEarn2total, 2)}}</td>
+                          <td width="40">{{ number_format($rowEarntotal + $rowEarn1total, 2)}}</td>
+                          <td width="40">{{ number_format($rowEarntotal1 + $rowEarn2total, 2)}}</td>
                         </tr>
                       </tfoot>
                       {{-- Grand Total Columns End --}}

@@ -105,7 +105,21 @@ th{
                         
                         @php
                         $modifyth = array_fill_keys(['Column1', 'Column2', 'Column3', 'Column4', 'Column5'], 0);
+                        $totaljoAdd = 0; 
                         @endphp
+                        
+                        @php
+                        $columns_jo = ['Column1' => 0, 'Column2' => 0, 'Column3' => 0, 'Column4' => 0, 'Column5' => 0];
+                        @endphp
+                                            
+                        @foreach ($modify1 as $mody)
+                            @if ($mody->pay_id == $payrollID && $mody->action == 'Additionals' && array_key_exists($mody->column, $columns_jo))
+                                @php
+                                    $columns_jo[$mody->column] += $mody->amount;
+                                @endphp
+                            @endif
+                        @endforeach
+
                         @if(isset($modify1))
                             @foreach ($modify1 as $mody)
                             @if ($mody->action == 'Additionals' && array_key_exists($mody->column, $modifyth))
@@ -130,9 +144,6 @@ th{
                                                 <th>Dept/Office</th>
                                                 <th>Designation</th>
                                                 <th>Gross Income</th>
-                                                @php
-                                                $columns_jo = ['Column1' => 0, 'Column2' => 0, 'Column3' => 0, 'Column4' => 0, 'Column5' => 0];
-                                                @endphp
                                                 @if(isset($modify1))
                                                     @foreach ($modify1 as $mody)
                                                         @if ($mody->action === 'Additionals' && array_key_exists($mody->column, $columns_jo))
@@ -234,17 +245,6 @@ th{
                                             <td>{{ $data->office_abbr }}</td>
                                             <td>{{ $data->emp_pos }}</td>
                                             <td>{{ number_format($grossincome, 2) }}</td>
-                                            @php
-                                              $totaljoAdd = 0; 
-                                            @endphp
-                                            
-                                            @foreach ($modify1 as $mody)
-                                                @if ($mody->pay_id == $data->payroll_ID && $mody->action == 'Additionals' && array_key_exists($mody->column, $columns_jo))
-                                                    @php
-                                                        $columns_jo[$mody->column] += $mody->amount;
-                                                    @endphp
-                                                @endif
-                                            @endforeach
                                    
                                             @foreach ($modify1 as $mody)
                                                 @if ($mody->payroll_id == $data->pid && array_key_exists($mody->column, $columns_jo))

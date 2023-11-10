@@ -350,7 +350,7 @@
                         <h4><strong>BIR DEDUCTIONS</strong></h4>
                         <div class="form-row">
                             <div class="col-md-6">
-                                <label for="exampleInputName">TAX 1%</label>
+                                <label for="exampleInputName">TAX 3%</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text">

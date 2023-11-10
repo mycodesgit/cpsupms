@@ -26,17 +26,17 @@
                 </div>
 
                 <div class="card-body">
-                    <div class="table-responsive">
+                    <div>
                         <form target="_blank" action="{{ route('payslip_gen') }}" method="POST">
                             @csrf
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-10">
                                     <div class="form-group">
                                         <label>Employee</label>
                                         <input type="hidden" name="payrol_ID" value="{{ $payrollID }}">
-                                        <select id="employeeSelect" name="emp_ID" class="select2 select2-textarea select2-searchable" multiple="multiple" data-placeholder="Select a State" style="width: 100%;">
+                                        <select id="employeeSelect" name="emp_ID[]" class="select2 select2-textarea select2-searchable" multiple="multiple" data-placeholder="Select a State" style="width: 100%;">
                                             @foreach($payslip as $pay)
-                                                <option value="{{ $pay->emp_ID }}" selected>{{ $pay->lname }} {{ $pay->fname }}</option>
+                                                <option value="{{ $pay->empid }}" selected>{{ $pay->lname }} {{ $pay->fname }}</option>
                                             @endforeach
                                         </select>
                                     </div>

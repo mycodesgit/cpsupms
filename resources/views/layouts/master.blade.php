@@ -45,9 +45,9 @@
     <div class="wrapper">
         <nav class="main-header navbar navbar-expand-md navbar-light bg-greenn">
             <div class="container-fluid">
-                <a href="" class="navbar-brand">
+                <a href="" class="mt-2">
                     <img src="{{ asset('template/img/CPSU_L.png') }}" alt="AdminLTE Logo" class="brand-image img-circle" style="box-shadow: 0 0 4px white;">
-                    <span class="brand-text text-light"> Payroll Management System</span>
+                    <span class="brand-text text-light text-bold"> Payroll Management System</span>
                 </a>
 
                 <!-- Right navbar links -->
@@ -65,7 +65,7 @@
             <!-- Content Wrapper. Contains page content -->
             <div class="content-wrapper">
                 <div class="content-header">
-                    <div class="container-fluid" style="margin-top: auto">
+                    <div class="container-fluid" style="margin-top: -5px">
                         @include('partials.control')
                     </div>
                 </div>
@@ -97,7 +97,7 @@
 @include('script.masterScript')
 @include('script.empScript')
 @include('script.userScript')
-@include('script.officeScript')+-
+@include('script.officeScript')
 @include('script.payrollScript')
 {{-- <script>
     window.addEventListener('contextmenu', function (e) {

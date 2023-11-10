@@ -251,7 +251,7 @@
 
                     $rowEarn = 0;
                     $rowEarns = round($salary + $total_additional - $total_deduction, 2);
-                    $decimalPoint = ($rowEarns * 100) % 100;
+                    $decimalPoint = ($rowEarns - floor($rowEarns)) * 100;
                     $decimalPoint = round($decimalPoint);
                     
                     if ($saltype == 1) {

@@ -61,12 +61,15 @@ Route::group(['middleware'=>['login_auth']],function(){
     Route::get('/storepayroll/{payrollID}/{statID}/{offID}',[PayrollController::class,'storepayroll'])->name('storepayroll');
     Route::get('/storepayroll-jo/{payrollID}/{statID}/{offID}',[PayrollController::class,'storepayroll'])->name('storepayroll-jo');
     Route::get('/pdf/{payrollID}/{statID}/{pid}/{offid}',[PayrollController::class,'showPdf'])->name('pdf');
+    Route::get('/pdf/Transmittal/{payrollID}/{statID}/{pid}/{offid}',[PayrollController::class,'showPdf'])->name('transmittal');
+    Route::get('/pdf/Remiitance/{col}/{payrollID}',[PayrollController::class,'pdfRemittance'])->name('remittance');
     Route::post('/import/{payrollID}/{statID}', [ImportController::class, 'importPayrolls'])->name('import');
     Route::post('/importPayrollsTwo/{payrollID}/{statID}', [ImportController::class, 'importPayrollsTwo'])->name('importPayrollsTwo');
     Route::post('/deductions-edit', [DeductionController::class, 'deductionsEdit'])->name('deductions-edit');
     Route::post('/deductions-update', [DeductionController::class, 'deductionsUpdate'])->name('deductions-update');
     Route::post('/additional-update', [DeductionController::class, 'additionalUpdate'])->name('additional-update');
     Route::get('/saltypepUp/{id}/{val}', [PayrollController::class, 'saltypepUp'])->name('saltypepUp');
+    Route::get('/statupdate/{id}/{val}', [PayrollController::class, 'statUpdate'])->name('stat-update');
 
     Route::get('/modify/show/{id}', [ModifyController::class, 'modifyShow'])->name('modifyShow');
     Route::post('/modify/update', [ModifyController::class, 'modifyUpdate'])->name('modifyUpdate');

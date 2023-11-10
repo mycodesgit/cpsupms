@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -237,6 +238,7 @@ class PayrollController extends Controller
         ->join('employees as emp', 'pf.emp_id', '=', 'emp.id')
         ->join('offices as o', 'emp.emp_dept', '=', 'o.id')
         ->where('pf.payroll_ID', $payrollID)
+        ->where('pf.status', '!=', '3')
         ->whereRaw($finalCond)
         ->get();
 
@@ -304,6 +306,10 @@ class PayrollController extends Controller
             ->where('payroll_files.stat_ID', '=', $statID)
             ->where('payroll_files.startDate', '=', $startDate)
             ->where('payroll_files.endDate', '=', $endDate)
+            // ->where(function($query) {
+            //     $query->where('o.id', '=', 64)
+            //     ->orWhere('o.id', '=', 65);
+            // })
             ->whereRaw($finalCond)
             ->get();
             
@@ -400,9 +406,42 @@ class PayrollController extends Controller
         }
     }
 
+    public function pdfRemittance($col, $payrollID){
+        ini_set('memory_limit', '1024M');
+        $deduct = "deductions";
+
+        $payroll = Payroll::find($payrollID);
+        $dateStart = date('F Y', strtotime($payroll->payroll_dateStart));
+
+        $datas = Deduction::join('employees', 'deductions.emp_id', '=', 'employees.id')
+        ->select('employees.*', 'deductions.' . $col)
+        ->where('deductions.pay_id', $payrollID)
+        ->orderBy('employees.lname')
+        ->get();
+    
+    
+        $datas = $datas->all(); 
+
+        $customPaper = array(0, 0, 792, 842);
+
+        $viewTemplate = 'payroll.pdf_remittance';
+        $pdf = \PDF::loadView($viewTemplate, compact('datas', 'col', 'dateStart'))->setPaper($customPaper);
+
+        $pdf->setCallbacks([
+            'before_render' => function ($domPdf) {
+                $domPdf->getCanvas()->page_text(10, 10, "Page {PAGE_NUM} of {PAGE_COUNT}", null, 10, array(0, 0, 0));
+            },
+        ]);
+
+        $pdf->render();
+
+        return $pdf->stream();
+    }
+
     public function showPdf($payrollID, $statID, $pid, $offid)
     {
-        ini_set('memory_limit', '1024M');
+        $currRoute = Route::currentRouteName();
+        ini_set('memory_limit', '3072M');
         $deduct = "deductions";
 
         $office = Office::where('id', $offid)->first();
@@ -425,6 +464,8 @@ class PayrollController extends Controller
         $campID = $payroll->campus_id;
         $dateStart = $payroll->payroll_dateStart;
         $dateEnd = $payroll->payroll_dateEnd;
+
+        $dateStartM = date('F Y', strtotime($payroll->payroll_dateStart));
         
         if ($statID == 1 || $statID == 4) {
             $start = new \DateTime($dateStart);
@@ -463,17 +504,24 @@ class PayrollController extends Controller
             ->where('payroll_files.stat_ID', $statID)
             ->where('payroll_files.startDate', $dateStart)
             ->where('payroll_files.endDate', $dateEnd)
+            // ->where(function($query) {
+            //     $query->where('of.id', '=', 64)
+            //           ->orWhere('of.id', '=', 65);
+            // })
+            ->orderBy('employees.lname')
             ->get();
         
-        // Remove the chunking of data
+            // Remove the chunking of data
             $datas = $datas->all(); // Convert the collection to an array
 
             // $customPaper = array(0, 0, 612, 1008);
             $customPaper = array(0, 0, 550, 1008);
             // Use different view templates for different statuses
             if($statID == 1){
-                $viewTemplate = $pid == 1 ? 'payroll.pdf_payrollform_reg' : 'payroll.pdf_payrollform_reg2';
-                $pdf = \PDF::loadView($viewTemplate, compact('datas', 'finalCond', 'fulldate', 'firstHalf', 'secondHalf', 'code', 'modify', 'modify1', 'pid', 'offid', 'office'))->setPaper($customPaper, 'landscape');
+                $currRoute == "transmittal" ? $viewTemplate = 'payroll.pdf_transmittal' : $viewTemplate = $pid == 1 ? 'payroll.pdf_payrollform_reg' : 'payroll.pdf_payrollform_reg2' ;
+
+                $pdf = \PDF::loadView($viewTemplate, compact('datas', 'finalCond', 'fulldate', 'firstHalf', 'secondHalf', 'code', 'modify', 'modify1', 'pid', 'offid', 'office', 'dateStartM'))->setPaper($customPaper, 'landscape');
+            
             }
             if($statID == 4){
                 $viewTemplate = 'payroll.pdf_payrollform_jo';
@@ -495,7 +543,7 @@ class PayrollController extends Controller
   
         $payslip = PayrollFile::join('payrolls', 'payroll_files.payroll_ID', '=', 'payrolls.id')
         ->join('employees', 'payroll_files.emp_id', '=', 'employees.id')
-        ->select('payroll_files.*', 'employees.*')
+        ->select('payroll_files.*', 'employees.*', 'employees.id as empid')
         ->where('payroll_files.payroll_ID', $payrollID)
         ->get();
         $camp = Campus::all();
@@ -510,46 +558,48 @@ class PayrollController extends Controller
 
     public function payslipGen(Request $request)
     {
-        $employee_ids = $request->emp_ID;
-        if (!is_array($employee_ids)) {
-            $employee_ids = [$employee_ids]; // Convert string to array
-        }
-
-        $payslipsPerPage = 4; // Number of payslips per page
-
+        $payslipsPerPage = 4;
+        
         $payslip = PayrollFile::join('payrolls', 'payroll_files.payroll_ID', '=', 'payrolls.id')
-            ->join('employees', 'payroll_files.emp_id', '=', 'employees.id')
-            ->select('payroll_files.*', 'employees.*')
-            ->where('payroll_files.payroll_ID', $request->payrol_ID)
-            ->get();
-
+        ->join('employees', 'payroll_files.emp_id', '=', 'employees.id')
+        ->join('deductions', 'employees.id', '=', 'deductions.emp_id')
+        ->select('payroll_files.*', 'employees.*', 'deductions.*')
+        ->where('payroll_files.payroll_ID', $request->payrol_ID)
+        ->whereIn('employees.id', $request->emp_ID)
+        ->orderBy('employees.emp_dept')
+        ->get();
+    
+    
         $totalPayslips = $payslip->count();
-        $totalPages = ceil($totalPayslips / $payslipsPerPage); // Calculate total number of pages
-
-        // Get the size of payslip_generate page
-        $pageWidth = 792; // Update with the desired width in points (e.g., 792 for 8.5" in landscape)
-        $pageHeight = 1224; // Update with the desired height in points (e.g., 1224 for 14" in landscape)
-
-        $customPaper = array(0, 0, $pageWidth, $pageHeight); // Payslip page dimensions in points
-        $pdf = \PDF::loadView('payroll.payslip_generate', compact('payslip', 'totalPages'))->setPaper($customPaper, 'landscape');
-
-        $pdf->setOptions(['enable_php' => true]); // Enable inline PHP code in the view
-
+        $totalPages = ceil($totalPayslips / $payslipsPerPage);
+    
+        $customPaper = [0, 0, 612, 1008];
+        $pdf = PDF::loadView('payroll.payslip_generate', compact('payslip', 'totalPages'))->setPaper($customPaper, 'portrait');
+    
+        $pdf->setOptions(['enable_php' => true]);
+    
         $pdf->setCallbacks([
             'before_render' => function ($domPdf) {
-                $domPdf->getCanvas()->page_text(10, 10, "Page {PAGE_NUM} of {PAGE_COUNT}", null, 10, array(0, 0, 0));
+                $domPdf->getCanvas()->page_text(10, 10, "Page {PAGE_NUM} of {PAGE_COUNT}", null, 10, [0, 0, 0]);
             },
         ]);
-
-        $pdf->render(); // Generate the PDF
-
-        //return $pdf->stream();
-        return view('payroll.payslip_generate', compact('payslip', 'totalPages'));
+    
+        return $pdf->stream();
     }
 
     public function saltypepUp($id, $val){
         $pfile = [
             'sal_type' => $val
+        ];
+
+        PayrollFile::where('id', $id)->update($pfile);
+
+        return redirect()->back()->with('success', 'Updated Successfully');
+    }
+
+    public function statUpdate($id, $val){
+        $pfile = [
+            'status' => $val
         ];
 
         PayrollFile::where('id', $id)->update($pfile);
